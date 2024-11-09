@@ -48,6 +48,11 @@ public class Constants {
                                                 6.12, Units.metersToFeet(5.3), 3.8 * Math.PI, 0.008, 
                                     5, 22.5, 22.5, Math.PI, 12.8, 
                                     false, 0.006, 6, 0, 110, 40);
+        
+        public static final SwerveConfig goldmoduleConfig = 
+                new SwerveConfig(0.317, 0.459+0.5, -0.112+0.5, 0.163,
+                                    //new SwerveConfig(0.317, 0, 0, 0,
+                        5.7, 15.82, 4 * Math.PI, 0.015, 1, 22.25, 24.75, Math.PI, 150.0 / 7, true, 0.006, 1, 0, 90, 40);
         // public static final Map<String, double[]> ROBOT_MAP = new HashMap<String, double[]>() {
         //     {
         //         put("GOLDMODULE", GOLDMODULE_CONSTANTS);
@@ -60,6 +65,7 @@ public class Constants {
         public static final Map<String, SwerveConfig> ROBOT_MAP = new HashMap<String, SwerveConfig>() {
             {
                 put("Surge", surgeConfig);
+                put("Goldmodule", goldmoduleConfig);
             }
         };
         
