@@ -116,8 +116,8 @@ public class TalonFXModule extends BaseModule{
     
     public void driveWithVoltage(double volts){
         driveMotor.setVoltage(volts);
-        SmartDashboard.putNumber("Module " + (this.index + 1) + " Supply Voltage Draw", driveMotor.getSupplyVoltage().getValueAsDouble());
-        SmartDashboard.putNumber("Module " + (this.index + 1) + " Voltage Draw", driveMotor.getMotorVoltage().getValueAsDouble());
+        SmartDashboard.putNumber("Swerve/Module " + (this.index + 1) + "/Supply Voltage Draw", driveMotor.getSupplyVoltage().getValueAsDouble());
+        SmartDashboard.putNumber("Swerve/Module " + (this.index + 1) + "/Voltage Draw", driveMotor.getMotorVoltage().getValueAsDouble());
     }
 
     protected double getRawDriveVelocity(){
@@ -168,7 +168,7 @@ public class TalonFXModule extends BaseModule{
             turnMotorOutput =  MathUtil.clamp(turnFeedback.calculate(Math.toDegrees(getCANCoderRadians()), setpoint), -1, 1);
         }
 
-        double currentVelocity = getDriveVelocity();
+        //double currentVelocity = getDriveVelocity();
 
         // if(DriverStation.isAutonomous())
         //     driveMotor.set(driveController.calculate(currentVelocity, state.speedMetersPerSecond) + driveFf.calculate(state.speedMetersPerSecond));
@@ -180,8 +180,6 @@ public class TalonFXModule extends BaseModule{
         turnMotor.set(turnMotorOutput);
 
         SmartDashboard.putNumber("Module " + (this.index+1) + "PID output", turnMotorOutput);
-
-        SmartDashboard.putNumber("Module " + (this.index+1) + " Current Velocity", currentVelocity);
         SmartDashboard.putNumber("Module " + (this.index+1) + " Desired Velocity", state.speedMetersPerSecond);
         SmartDashboard.putNumber("Module " + (this.index+1) + " Rotation Setpoint Rad", state.angle.getRadians());
     }
