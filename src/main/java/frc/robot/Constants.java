@@ -127,4 +127,25 @@ public class Constants {
                 CHOSEN_CONSTANTS.backLeftTranslation, // Back left wheel
                 CHOSEN_CONSTANTS.backRightTranslation); // Back right wheel
     }
+
+    public static final class Arm{
+        public static final double INTAKE_POSITION_RADIANS = Math.toRadians(52.25);//0.99;
+        public static final double SHOOT_POSITION_RADIANS = 1.05;
+
+
+
+
+        
+        //113.2 degrees (blue end amp pos)
+        public static final double AMP_POSITION_RADIANS = Math.toRadians(115.5);// 113.5 //Math.toRadians(117.5);
+        
+        public static final double STOCKPILE_POSITION_RADIANS = 0.7;
+        public static final double READY_POSITION_RADIANS = 0.4;
+        public static final double PODIUM_SHOT_RADIANS = Math.toRadians(39);
+    }
+
+    public static final class Shooter{
+        public static final int STOCKPILE_RPM = 3500;
+        public static final double MAX_SHOOTING_DISTANCE = 100;
+    }
 }
