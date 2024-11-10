@@ -40,7 +40,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class SwerveBase extends SubsystemBase {
 
-    private BaseModule[] modules;
+    protected BaseModule[] modules;
     protected final AprilTagCamera[] cameras;
 
     private final Field2d m_field = new Field2d();
@@ -51,10 +51,11 @@ public class SwerveBase extends SubsystemBase {
     private final LinearFilter yAccelFilter = LinearFilter.movingAverage(5);
     private final PIDController thetaController = new PIDController(Constants.Swerve.ROBOT_ROTATION_KP, 0, 0);
 
-    private double max_accel = 0;
-    public double speed = 0;
-    private double initialGyroAngle = 0;
+    protected double max_accel = 0;
+    protected double speed = 0;
+    protected double initialGyroAngle = 0;
     protected boolean rotatedToSetpoint = false;
+    protected Pose2d currentRobotPose = new Pose2d();
 
     public final Trigger atRotationSetpoint = new Trigger(()-> robotRotationAtSetpoint());
 
@@ -648,7 +649,7 @@ public class SwerveBase extends SubsystemBase {
         //updateOdometryWithVision();
 
 
-        Pose2d currentRobotPose = getPose();
+        currentRobotPose = getPose();
         m_field.setRobotPose(currentRobotPose);
          
 
