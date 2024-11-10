@@ -54,6 +54,8 @@ public class SwerveConfig {
          * @param turningGearRatio The gear ratio for turning the robot
          * @param driveMotorInverted If the drive motor is inverted or not
          * @param rotationToAngleKPval The KP value for rotating the robot to an angle (rotation override)
+         * @param statorCurrentLimit The stator current limit for the drive motors
+         * @param supplyCurrentLimit The supply current limit for the drive motors
          */
         public SwerveConfig(double frontRightOffset, double frontLeftOffset, double backLeftOffset, double backRightOffset, 
                             double drivingGearRatio, double maxSpeedFeetPerSec, double wheelCircumferenceInches, double turningKPval,
@@ -84,9 +86,8 @@ public class SwerveConfig {
             // note: this doesn't work if the chassis isn't square
             this.maxAngularSpeedRadPerSec = this.maxSpeedMetersPerSec / this.frontRightTranslation.getNorm();
 
-            // once we find an accurate measurement of our accel, comment out the below line
-            //this.maxAngularAccelerationRadPerSecondSquared = this.maxAccelMetersPerSec / this.frontRightTranslation.getNorm();
-            this.maxAngularAccelerationRadPerSecondSquared = maxAngularAccelerationRadPerSecondSquared;
+            this.maxAngularAccelerationRadPerSecondSquared = this.maxAccelMetersPerSec / this.frontRightTranslation.getNorm();
+            //this.maxAngularAccelerationRadPerSecondSquared = maxAngularAccelerationRadPerSecondSquared;
 
             this.wheelKP = turningKPval;
             this.pathplannerOmegaKP = profiledKPvalPathplanner;

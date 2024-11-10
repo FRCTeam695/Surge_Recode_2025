@@ -41,6 +41,7 @@ public class TalonFXModule extends BaseModule{
      */
     public final String kModuleType = "TalonFXModule";
 
+    private double rot_sample;
 
     public TalonFXModule(int driveMotorId, int turnMotorId, double absoluteEncoderOffset, int TurnCANCoderId, int moduleIndex){
         super(moduleIndex);
@@ -60,6 +61,7 @@ public class TalonFXModule extends BaseModule{
 
         // driveFf = new SimpleMotorFeedforward(0.011, 0.2);
         // driveController = new PIDController(0.1, 0, 0);
+        rot_sample = 0;
     }
 
     
@@ -118,6 +120,15 @@ public class TalonFXModule extends BaseModule{
         driveMotor.setVoltage(volts);
         SmartDashboard.putNumber("Swerve/Module " + (this.index + 1) + "/Supply Voltage Draw", driveMotor.getSupplyVoltage().getValueAsDouble());
         SmartDashboard.putNumber("Swerve/Module " + (this.index + 1) + "/Voltage Draw", driveMotor.getMotorVoltage().getValueAsDouble());
+    }
+
+    public double start_rotation_sample(){
+        rot_sample = getRawDrivePosition();
+        return rot_sample;
+    }
+
+    public double get_change_in_rotation(){
+        return Math.abs(getRawDrivePosition() - rot_sample);
     }
 
     protected double getRawDriveVelocity(){

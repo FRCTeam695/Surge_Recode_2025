@@ -59,6 +59,8 @@ public abstract class  BaseModule {
     public abstract String getModuleType();
     public abstract double getDriveStatorCurrent();
     public abstract void driveWithVoltage(double volts);
+    public abstract double start_rotation_sample();
+    public abstract double get_change_in_rotation();
     public double getDriveVelocity(){
         return getRawDriveVelocity() / Constants.Swerve.DRIVING_GEAR_RATIO * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS;
     }

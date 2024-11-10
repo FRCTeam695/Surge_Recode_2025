@@ -87,6 +87,7 @@ public class Constants {
         public static final double MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED = CHOSEN_CONSTANTS.maxAngularAccelerationRadPerSecondSquared;
         public static final double DISCRETIZE_TIMESTAMP = 0.02;
         public static final boolean DRIVE_MOTOR_INVERTED = CHOSEN_CONSTANTS.driveMotorInverted;
+        public static final double MAX_ACCELERATION_METERS_PER_SECOND_SQ = CHOSEN_CONSTANTS.maxAccelMetersPerSec;
         public static final double SUPPLY_CURRENT_LIMIT = CHOSEN_CONSTANTS.supplyCurrentLimit;
         public static final double STATOR_CURRENT_LIMIT = CHOSEN_CONSTANTS.statorCurrentLimit;
 
@@ -94,31 +95,31 @@ public class Constants {
         public static final int FRONT_RIGHT_DRIVE_ID = 13;
         public static final int FRONT_RIGHT_TURN_ID = 12;
         public static final int FRONT_RIGHT_CANCODER_ID = 11;
-        public static final double FRONT_RIGHT_ABS_ENCODER_OFFSET = CHOSEN_CONSTANTS.frontRightOffset;
+        public static final double FRONT_RIGHT_ABS_ENCODER_OFFSET_ROTATIONS = CHOSEN_CONSTANTS.frontRightOffset;
 
         // front left wheel
         public static final int FRONT_LEFT_DRIVE_ID = 23;
         public static final int FRONT_LEFT_TURN_ID = 22;
         public static final int FRONT_LEFT_CANCODER_ID = 21;
-        public static final double FRONT_LEFT_ABS_ENCODER_OFFSET = CHOSEN_CONSTANTS.frontLeftOffset;
+        public static final double FRONT_LEFT_ABS_ENCODER_OFFSET_ROTATIONS = CHOSEN_CONSTANTS.frontLeftOffset;
 
         // back left wheel
         public static final int BACK_LEFT_DRIVE_ID = 33;
         public static final int BACK_LEFT_TURN_ID = 32;
         public static final int BACK_LEFT_CANCODER_ID = 31;
-        public static final double BACK_LEFT_ABS_ENCODER_OFFSET = CHOSEN_CONSTANTS.backLeftOffset;
+        public static final double BACK_LEFT_ABS_ENCODER_OFFSET_ROTATIONS = CHOSEN_CONSTANTS.backLeftOffset;
 
         // back right wheel
         public static final int BACK_RIGHT_DRIVE_ID = 43;
         public static final int BACK_RIGHT_TURN_ID = 42;
         public static final int BACK_RIGHT_CANCODER_ID = 41;
-        public static final double BACK_RIGHT_ABS_ENCODER_OFFSET = CHOSEN_CONSTANTS.backRightOffset;
+        public static final double BACK_RIGHT_ABS_ENCODER_OFFSET_ROTATIONS = CHOSEN_CONSTANTS.backRightOffset;
 
         public static final TrapezoidProfile.Constraints TRAPEZOID_THETA_CONSTRAINTS = new TrapezoidProfile.Constraints(
                 MAX_ANGULAR_SPEED_RAD_PER_SECOND, MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED);
 
-        public static final double TRACK_WIDTH = CHOSEN_CONSTANTS.trackWidthMeters;
-        public static final double WHEEL_BASE = CHOSEN_CONSTANTS.wheelBaseMeters;
+        public static final double TRACK_WIDTH_METERS = CHOSEN_CONSTANTS.trackWidthMeters;
+        public static final double WHEEL_BASE_METERS = CHOSEN_CONSTANTS.wheelBaseMeters;
 
         public static final SwerveDriveKinematics kDriveKinematics = new SwerveDriveKinematics(
                 CHOSEN_CONSTANTS.frontRightTranslation, // Front right wheel

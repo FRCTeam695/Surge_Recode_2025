@@ -8,6 +8,8 @@ import frc.BisonLib.BaseProject.Vision.AprilTagCamera;
 import frc.BisonLib.BaseProject.Vision.VisionPosePacket;
 import frc.robot.Constants;
 
+import static edu.wpi.first.wpilibj2.command.Commands.waitSeconds;
+
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -16,6 +18,7 @@ import com.studica.frc.AHRS;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.*;
 import com.pathplanner.lib.controllers.*;
+import com.pathplanner.lib.path.*;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
@@ -50,6 +53,7 @@ public class SwerveBase extends SubsystemBase {
 
     private double max_accel = 0;
     public double speed = 0;
+    private double initialGyroAngle = 0;
     protected boolean rotatedToSetpoint = false;
 
     public final Trigger atRotationSetpoint = new Trigger(()-> robotRotationAtSetpoint());
@@ -374,6 +378,60 @@ public class SwerveBase extends SubsystemBase {
                 }
         );
     }
+
+    /*
+     * Calculates the circumference of the wheel by turning in place slowly
+     */
+    public Command runWheelCharacterization(){
+
+        // distance each module will travel
+        double distance_traveled = Constants.Swerve.WHEEL_BASE_METERS * Math.PI;
+
+        return runOnce(()-> {
+
+            //get each module in positions
+            for(var mod : modules){
+                    mod.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45 * mod.index * 90)));
+            }
+
+        })
+        .andThen(
+         waitSeconds(0.5)   
+        )
+        .andThen(runOnce(
+          ()-> {
+            for(var mod : modules){
+                mod.start_rotation_sample();
+            }
+            initialGyroAngle = gyro.getAngle();
+          }  
+        ))
+        .andThen(
+            run(()-> {
+
+                // closed loop control to turn in place one rotation
+                double error = Math.abs(360 - Math.abs(gyro.getAngle() - initialGyroAngle));
+                for(var mod : modules){
+                    mod.setDesiredState(new SwerveModuleState(error * 0.00277777777, Rotation2d.fromDegrees(45 * mod.index * 90)));
+                }
+            })
+        )
+        .andThen(
+            runOnce(()-> {
+                double avg_calculated_wheel_circumference = 0;
+                for(var mod : modules){
+                    double wheel_rotations = mod.get_change_in_rotation()/Constants.Swerve.DRIVING_GEAR_RATIO;
+                    double new_circumference = distance_traveled/wheel_rotations;
+                    avg_calculated_wheel_circumference += new_circumference;
+
+                    SmartDashboard.putNumber("Swerve/Module " + mod.index + "/calculated wheel circumference", new_circumference);
+                }
+                avg_calculated_wheel_circumference /= 4;
+                SmartDashboard.putNumber("Swerve/Average Calculated Wheel Circumference", avg_calculated_wheel_circumference);
+            })
+        )
+        ;
+    }
     
 
     /*
@@ -414,6 +472,21 @@ public class SwerveBase extends SubsystemBase {
     }
 
 
+    public Command driveToPose(Pose2d targetPose, double endVelocity){
+        PathConstraints constraints = new PathConstraints(
+            Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS, Constants.Swerve.MAX_ACCELERATION_METERS_PER_SECOND_SQ,
+            Constants.Swerve.MAX_ANGULAR_SPEED_RAD_PER_SECOND, Constants.Swerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED
+        );
+
+        Command pathfindingCommand = AutoBuilder.pathfindToPose(
+            targetPose,
+            constraints,
+            endVelocity // Goal end velocity in meters/sec
+        );
+
+        return pathfindingCommand;
+    }
+
     /**
      * Drives swerve given chassis speeds robot relative
      * 
@@ -450,7 +523,7 @@ public class SwerveBase extends SubsystemBase {
         // I derivated whole thing using polar coordinates but the Translation2d turns it back into standard x, y coordinates
         // Here is my work, I didn't write this in a way that I mean't to be easy to be understood by others but make of it what you will
         // https://i.imgur.com/jL4c0yS.jpeg
-        double radius = Math.sqrt(2) * Constants.Swerve.WHEEL_BASE/2.0;
+        double radius = Math.sqrt(2) * Constants.Swerve.WHEEL_BASE_METERS/2.0;
         double offset;
 
         // Depending on which direction we want to rotate we choose a different center of rotation
