@@ -209,7 +209,7 @@ public class RobotContainer {
     AmpBar.setDefaultCommand(AmpBar.retract());
 
     
-    // This is the Swerve subsystem default command, this allows the driver to drive the robot
+    //This is the Swerve subsystem default command, this allows the driver to drive the robot
     Swerve.setDefaultCommand
       (
         run
@@ -287,7 +287,7 @@ public class RobotContainer {
     // we do this because the shooter wheels need room to spin up to speed
     .andThen
     (
-      Intake.indexerClosedLoopControl(0.2, 0.25)
+      Intake.indexerClosedLoopControl(0.2)
       .until
       (
         Intake::getBeamMade

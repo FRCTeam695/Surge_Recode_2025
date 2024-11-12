@@ -184,9 +184,8 @@ public class TalonFXModule extends BaseModule{
         // if(DriverStation.isAutonomous())
         //     driveMotor.set(driveController.calculate(currentVelocity, state.speedMetersPerSecond) + driveFf.calculate(state.speedMetersPerSecond));
         // else{
-            driveMotor.set(Math.cos(Math.toRadians(turnFeedback.getError())) * state.speedMetersPerSecond/Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS);
+        driveMotor.set(Math.cos(Math.toRadians(turnFeedback.getError())) * state.speedMetersPerSecond/Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS);
         //}
-        
 
         turnMotor.set(turnMotorOutput);
 

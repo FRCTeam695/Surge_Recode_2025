@@ -32,6 +32,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
@@ -141,7 +142,7 @@ public class SwerveBase extends SubsystemBase {
         } catch (Exception e) {
         // Handle exception as needed
         e.printStackTrace();
-        config = new RobotConfig(null, null, null, null);
+        config = new RobotConfig(74.088, 6.883, new ModuleConfig(0.048, 5.450, 1.1, DCMotor.getFalcon500(1), 60, 4), 0.546, 0.546);
         }
 
         // Configure the AutoBuilder last
@@ -183,7 +184,7 @@ public class SwerveBase extends SubsystemBase {
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS);
 
         for(var module : modules){
-            SmartDashboard.putString("Swerve/Module State " + module.index, desiredStates[module.index].toString());
+            //SmartDashboard.putString("Swerve/Module State " + module.index, desiredStates[module.index].toString());
             module.setDesiredState(desiredStates[module.index]);
         }
         
@@ -497,7 +498,7 @@ public class SwerveBase extends SubsystemBase {
         // discretizes the chassis speeds (acccounts for robot skew)
         chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, Constants.Swerve.DISCRETIZE_TIMESTAMP);
 
-        SmartDashboard.putString("Swerve/Commanded Chassis Speeds", chassisSpeeds.toString());
+        //SmartDashboard.putString("Swerve/Commanded Chassis Speeds", chassisSpeeds.toString());
         // convert chassis speeds to module states
         SwerveModuleState[] moduleStates = Constants.Swerve.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
 
@@ -556,7 +557,7 @@ public class SwerveBase extends SubsystemBase {
             return;
         }
 
-        drive(speedsSupplier.get(), fieldOriented);
+        driveFromSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(speedsSupplier.get(), getGyroHeading()));
     }
     
     /**

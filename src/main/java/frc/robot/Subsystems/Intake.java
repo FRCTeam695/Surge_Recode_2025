@@ -2,6 +2,7 @@ package frc.robot.Subsystems;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
@@ -34,7 +35,11 @@ public class Intake extends SubsystemBase{
         indexerEncoder = indexMotor.getEncoder();
         indexerPIDController = indexMotor.getClosedLoopController();
 
+        ClosedLoopConfig controllerConfig = new ClosedLoopConfig();
+        controllerConfig.p(0.25);
+
         SparkMaxConfig config = new SparkMaxConfig();
+        config.apply(controllerConfig);
         config.smartCurrentLimit(50);
         config.idleMode(IdleMode.kBrake);
         intakeMotor.configure(config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
@@ -83,7 +88,7 @@ public class Intake extends SubsystemBase{
         );
     }
 
-    public Command indexerClosedLoopControl(double rotations, double kp){
+    public Command indexerClosedLoopControl(double rotations){
         return new FunctionalCommand(
             ()-> {
                   indexerEncoder.setPosition(0);
