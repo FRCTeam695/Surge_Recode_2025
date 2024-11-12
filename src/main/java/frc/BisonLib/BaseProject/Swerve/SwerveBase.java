@@ -392,7 +392,7 @@ public class SwerveBase extends SubsystemBase {
 
             //get each module in positions
             for(var mod : modules){
-                    mod.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45 * mod.index * 90)));
+                    mod.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45 + mod.index * 90)));
             }
 
         })
@@ -413,7 +413,7 @@ public class SwerveBase extends SubsystemBase {
                 // closed loop control to turn in place one rotation
                 double error = Math.abs(360 - Math.abs(gyro.getAngle() - initialGyroAngle));
                 for(var mod : modules){
-                    mod.setDesiredState(new SwerveModuleState(error * 0.00277777777, Rotation2d.fromDegrees(45 * mod.index * 90)));
+                    mod.setDesiredState(new SwerveModuleState(error * 0.00277777777, Rotation2d.fromDegrees(45 + mod.index * 90)));
                 }
             })
         )

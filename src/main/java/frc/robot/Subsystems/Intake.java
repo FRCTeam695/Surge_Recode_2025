@@ -88,7 +88,7 @@ public class Intake extends SubsystemBase{
             ()-> {
                   indexerEncoder.setPosition(0);
                  },
-            ()-> indexerPIDController.setReference(-rotations, SparkMax.ControlType.kPosition, 1),
+            ()-> indexerPIDController.setReference(-rotations, SparkMax.ControlType.kPosition),
             interrupted-> {},
             ()-> indexerEncoder.getPosition() <= -rotations,
             this
