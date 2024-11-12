@@ -2,6 +2,7 @@ package frc.robot.Subsystems;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -35,6 +36,7 @@ public class Intake extends SubsystemBase{
 
         SparkMaxConfig config = new SparkMaxConfig();
         config.smartCurrentLimit(50);
+        config.idleMode(IdleMode.kBrake);
         intakeMotor.configure(config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
         indexMotor.configure(config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
         intakeMotor.clearFaults();

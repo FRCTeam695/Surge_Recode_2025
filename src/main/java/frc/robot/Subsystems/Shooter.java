@@ -3,6 +3,7 @@ package frc.robot.Subsystems;
 import java.util.function.DoubleSupplier;
 
 import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.RelativeEncoder;
@@ -44,10 +45,7 @@ public class Shooter extends SubsystemBase {
     shooterNeoEncoder1.setPosition(0);
     shooterNeoEncoder2.setPosition(0);
 
-    shooterNeo1.configure(new SparkFlexConfig(), SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
 
-    shooterNeo1.enableVoltageCompensation(11.5);
-    shooterNeo2.enableVoltageCompensation(11.5);
     // PID coefficients
     kP = 0.000150 * 1.5;// * 2; **times two for amp
     kI = 0;
@@ -59,20 +57,23 @@ public class Shooter extends SubsystemBase {
     maxRPM = 5700;
     setPointRPM = 0;
 
-    // set PID coefficients
-    shooterNeo1PID.setP(kP);
-    shooterNeo1PID.setI(kI);
-    shooterNeo1PID.setD(kD);
-    shooterNeo1PID.setIZone(kIz);
-    shooterNeo1PID.setFF(kFF);
-    shooterNeo1PID.setOutputRange(kMinOutput, kMaxOutput);
+    SparkFlexConfig config = new SparkFlexConfig();
+    ClosedLoopConfig pidConfig = new ClosedLoopConfig();
+    pidConfig.p(kP);
+    pidConfig.i(kI);
+    pidConfig.d(kD);
+    pidConfig.iZone(kIz);
+    pidConfig.velocityFF(kFF);
+    pidConfig.maxOutput(kMaxOutput);
+    pidConfig.minOutput(kMinOutput);
 
-    shooterNeo2PID.setP(kP);
-    shooterNeo2PID.setI(kI);
-    shooterNeo2PID.setD(kD);
-    shooterNeo2PID.setIZone(kIz);
-    shooterNeo2PID.setFF(kFF);
-    shooterNeo2PID.setOutputRange(kMinOutput, kMaxOutput);
+    config.voltageCompensation(11.5);
+    config.idleMode(IdleMode.kBrake);
+    config.apply(pidConfig);
+
+
+    shooterNeo1.configure(config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
+    shooterNeo2.configure(config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
 
     scoringStatus = "intake";
 
@@ -145,86 +146,6 @@ public class Shooter extends SubsystemBase {
     return setPointRPM > 5;
   }
 
-  //this command doesnt get used
-  public Command shooterDefaultCommand(double kp_rot){
-    return new FunctionalCommand(
-      ()-> {
-        shooterNeo1PID.setIAccum(0);
-        shooterNeo2PID.setIAccum(0);
-
-        // makes sure to set the kp, kp for shooting vs closed loop rotation is very different
-        shooterNeo1PID.setP(1);
-        shooterNeo2PID.setP(1);
-
-        shooterNeo1PID.setI(0);
-        shooterNeo2PID.setI(0);
-        
-        // this is just for good measure
-        shooterNeo1PID.setOutputRange(-1, 1);
-        shooterNeo2PID.setOutputRange(-1, 1);
-
-        //resets the encoders
-        shooterNeoEncoder1.setPosition(0);
-        shooterNeoEncoder2.setPosition(0);
-      },
-
-      ()-> {
-        // tells the neo's where to go
-        shooterNeo1PID.setReference(0, SparkFlex.ControlType.kPosition);
-        shooterNeo2PID.setReference(0, SparkFlex.ControlType.kPosition);
-      },
-
-      interrupted-> {},
-
-      // end condition
-      ()-> (false)
-
-      // ALWAYS REQUIRE THE SUBSYSTEM!!
-    , this);
-  }
-
-  // rotates a specific amount of rotations using closed loop control
-  public Command closedLoopRotation(double rotations, double kp_rot, double ki_rot){
-
-    return new FunctionalCommand(
-      ()-> {
-        shooterNeo1PID.setIAccum(0);
-        shooterNeo2PID.setIAccum(0);
-
-        // makes sure to set the kp, kp for shooting vs closed loop rotation is very different
-        shooterNeo1PID.setP(kp_rot);
-        shooterNeo2PID.setP(kp_rot);
-
-        shooterNeo1PID.setI(ki_rot);
-        shooterNeo2PID.setI(ki_rot);
-        
-        // this is just for good measure
-        shooterNeo1PID.setOutputRange(-1, 1);
-        shooterNeo2PID.setOutputRange(-1, 1);
-
-        //resets the encoders
-        shooterNeoEncoder1.setPosition(0);
-        shooterNeoEncoder2.setPosition(0);
-      },
-
-      ()-> {
-        // tells the neo's where to go
-        shooterNeo1PID.setReference(rotations, SparkFlex.ControlType.kPosition);
-        shooterNeo2PID.setReference(-rotations, SparkFlex.ControlType.kPosition);
-      },
-
-      interrupted-> {
-        shooterNeo1PID.setI(0);
-        shooterNeo2PID.setI(0);
-      },
-
-      // end condition
-      ()-> (Math.abs(shooterNeoEncoder1.getPosition()) >= rotations * 0.95)
-
-      // ALWAYS REQUIRE THE SUBSYSTEM!!
-    , this);
-  }
-
 
   public Command runVelocity(DoubleSupplier velocity) {
     return new FunctionalCommand(
@@ -232,12 +153,6 @@ public class Shooter extends SubsystemBase {
           SmartDashboard.putNumber("Commanded Velocity", velocity.getAsDouble());
           shooterNeo1PID.setIAccum(0);
           shooterNeo2PID.setIAccum(0);
-
-          shooterNeo1PID.setP(kP);
-          shooterNeo2PID.setP(kP);
-
-          shooterNeo1PID.setI(0);
-          shooterNeo2PID.setI(0);
         },
         () -> {
           setPointRPM = velocity.getAsDouble() * maxRPM;

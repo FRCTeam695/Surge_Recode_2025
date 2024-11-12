@@ -6,6 +6,7 @@ import java.util.function.DoubleSupplier;
 
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.controller.ArmFeedforward;
@@ -51,8 +52,10 @@ public class Arm extends SubsystemBase {
     abs_encoder = new DutyCycleEncoder(di);
     m_pitchControlMotor = new SparkMax(54, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
 
+
     SparkMaxConfig sparkConfig = new SparkMaxConfig();
         sparkConfig.smartCurrentLimit(20);
+    sparkConfig.idleMode(IdleMode.kBrake);
     m_pitchControlMotor.configure(sparkConfig, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
     m_pitchControlMotor.clearFaults();
 

@@ -8,6 +8,8 @@ import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.ClosedLoopConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.RelativeEncoder;
 
@@ -23,10 +25,15 @@ public class AmpBar extends SubsystemBase {
   private SparkClosedLoopController controller;
 
   public AmpBar() {
-        ampBarMotor = new SparkMax(57, MotorType.kBrushless);        
+        ampBarMotor = new SparkMax(57, MotorType.kBrushless); 
+        
+        ClosedLoopConfig controllerConfig = new ClosedLoopConfig();
+        controllerConfig.p(0.21);
         
         SparkMaxConfig sparkConfig = new SparkMaxConfig();
         sparkConfig.smartCurrentLimit(0, 15, 0);
+        sparkConfig.idleMode(IdleMode.kBrake);
+        sparkConfig.apply(controllerConfig);
         ampBarMotor.configure(sparkConfig, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
 
         encoder = ampBarMotor.getEncoder();
@@ -38,7 +45,7 @@ public class AmpBar extends SubsystemBase {
     return new FunctionalCommand(
     ()-> {
         },
-    ()-> controller.setReference(setpoint, SparkMax.ControlType.kPosition, 0),
+    ()-> controller.setReference(setpoint, SparkMax.ControlType.kPosition),
     interrupted-> {},
     ()-> Math.abs(encoder.getPosition() - setpoint) < 0.1,
     this
