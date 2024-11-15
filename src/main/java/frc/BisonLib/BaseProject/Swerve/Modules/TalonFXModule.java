@@ -16,6 +16,9 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
+
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 
 import frc.robot.Constants;
@@ -47,7 +50,7 @@ public class TalonFXModule extends BaseModule{
     public final String kModuleType = "TalonFXModule";
 
     private double rot_sample;
-    private Object lock = new Object();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     public TalonFXModule(int driveMotorId, int turnMotorId, double absoluteEncoderOffset, int TurnCANCoderId, int moduleIndex){
         super(moduleIndex);
@@ -204,8 +207,11 @@ public class TalonFXModule extends BaseModule{
         Rotation2d latestAngle;
 
         // this way drive and odometry cant acess the angle in latestPosition at the same time
-        synchronized(lock){
+        lock.readLock().lock();
+        try{
             latestAngle = latestPosition.angle;
+        }finally{
+            lock.readLock().unlock();
         }
         
         var delta = desiredState.angle.minus(latestAngle);
@@ -221,11 +227,12 @@ public class TalonFXModule extends BaseModule{
             rotationSetter.withPosition(desiredState.angle.getRotations())
         );
 
-        // SmartDashboard.putNumber("Module " + (this.index+1) + "PID output", turnMotorOutput);
-        // SmartDashboard.putNumber("Module " + (this.index+1) + " Desired Velocity", desiredState.speedMetersPerSecond);
-        // SmartDashboard.putNumber("Module " + (this.index+1) + " Rotation Setpoint Rad", desiredState.angle.getRadians());
-        // SmartDashboard.putNumber("Module " + (this.index+1) + " Cosine Error", Math.cos(Math.abs(desiredState.angle.getRadians() -  latestAngle.getRadians())));
-        // SmartDashboard.putNumber("Module " + (this.index+1) + " Latest Angle", latestAngle.getRadians());
+        /*
+        SmartDashboard.putNumber("Module " + (this.index+1) + " Desired Velocity", desiredState.speedMetersPerSecond);
+        SmartDashboard.putNumber("Module " + (this.index+1) + " Rotation Setpoint Rad", desiredState.angle.getRadians());
+        SmartDashboard.putNumber("Module " + (this.index+1) + " Cosine Error", Math.cos(Math.abs(desiredState.angle.getRadians() -  latestAngle.getRadians())));
+        SmartDashboard.putNumber("Module " + (this.index+1) + " Latest Angle", latestAngle.getRadians());
+        */
     }
 
     @Override
@@ -233,15 +240,25 @@ public class TalonFXModule extends BaseModule{
         latestPosition.distanceMeters = getRawDrivePosition() / Constants.Swerve.DRIVING_GEAR_RATIO * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS;
 
         // this way drive and odometry cant acess the angle in latestPosition at the same time
-        synchronized (lock){
+        lock.writeLock().lock();
+        try{
             latestPosition.angle = new Rotation2d(getCANCoderRadians());
+        }finally{
+            lock.writeLock().unlock();
         }
         return latestPosition;
     }
 
     @Override
     public SwerveModuleState getState(){
-        return new SwerveModuleState(getDriveVelocity(), latestPosition.angle);
+        Rotation2d angle;
+        lock.readLock().lock();
+        try {
+            angle = latestPosition.angle;
+        }finally{
+            lock.readLock().unlock();
+        }
+        return new SwerveModuleState(getDriveVelocity(), angle);
     }
 
 }
