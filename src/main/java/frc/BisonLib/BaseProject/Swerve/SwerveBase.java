@@ -44,7 +44,7 @@ public class SwerveBase extends SubsystemBase {
 
     private final Field2d m_field = new Field2d();
     private final SwerveDrivePoseEstimator odometry;
-    private final AHRS gyro = new AHRS(AHRS.NavXComType.kMXP_SPI, 125);
+    private final AHRS gyro = new AHRS(AHRS.NavXComType.kMXP_SPI, 175);
     // private final BuiltInAccelerometer rioAccelerometer = new BuiltInAccelerometer();
     // private final LinearFilter xAccelFilter = LinearFilter.movingAverage(5);
     // private final LinearFilter yAccelFilter = LinearFilter.movingAverage(5);
@@ -648,6 +648,7 @@ public class SwerveBase extends SubsystemBase {
 
 
         currentRobotPose = getPose();
+        SmartDashboard.putNumber("Gyro Update Rate", gyro.getActualUpdateRate());
         m_field.setRobotPose(currentRobotPose);
          
 
