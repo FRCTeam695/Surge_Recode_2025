@@ -50,7 +50,7 @@ public class TalonFXModule extends BaseModule{
     public final String kModuleType = "TalonFXModule";
 
     private double rot_sample;
-    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock odometryLock = new ReentrantReadWriteLock();
 
     public TalonFXModule(int driveMotorId, int turnMotorId, double absoluteEncoderOffset, int TurnCANCoderId, int moduleIndex){
         super(moduleIndex);
@@ -179,7 +179,6 @@ public class TalonFXModule extends BaseModule{
         return driveMotor.getAcceleration().getValueAsDouble();
     }
 
-
     protected double getCANCoderRadians(){
         double angleRad = absoluteEncoder.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI;
         // SmartDashboard.putNumber("Module " + (this.index + 1) +  " Angle Radians", angleRad);
@@ -207,11 +206,11 @@ public class TalonFXModule extends BaseModule{
         Rotation2d latestAngle;
 
         // this way drive and odometry cant acess the angle in latestPosition at the same time
-        lock.readLock().lock();
+        odometryLock.readLock().lock();
         try{
             latestAngle = latestPosition.angle;
         }finally{
-            lock.readLock().unlock();
+            odometryLock.readLock().unlock();
         }
         
         var delta = desiredState.angle.minus(latestAngle);
@@ -240,11 +239,11 @@ public class TalonFXModule extends BaseModule{
         latestPosition.distanceMeters = getRawDrivePosition() / Constants.Swerve.DRIVING_GEAR_RATIO * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS;
 
         // this way drive and odometry cant acess the angle in latestPosition at the same time
-        lock.writeLock().lock();
+        odometryLock.writeLock().lock();
         try{
             latestPosition.angle = new Rotation2d(getCANCoderRadians());
         }finally{
-            lock.writeLock().unlock();
+            odometryLock.writeLock().unlock();
         }
         return latestPosition;
     }
@@ -252,11 +251,11 @@ public class TalonFXModule extends BaseModule{
     @Override
     public SwerveModuleState getState(){
         Rotation2d angle;
-        lock.readLock().lock();
+        odometryLock.readLock().lock();
         try {
             angle = latestPosition.angle;
         }finally{
-            lock.readLock().unlock();
+            odometryLock.readLock().unlock();
         }
         return new SwerveModuleState(getDriveVelocity(), angle);
     }

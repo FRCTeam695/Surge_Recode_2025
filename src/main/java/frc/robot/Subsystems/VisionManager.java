@@ -18,6 +18,7 @@ public class VisionManager extends VisionManagerBase{
     public Optional<Double> distanceToSpeaker;
     public Optional<Double> yawToSpeaker;
     public Optional<Double> pitchToSpeaker;
+    public double latency;
     public static Optional<Double> yawToNote;
     
     public double armPitch;
@@ -186,6 +187,7 @@ public class VisionManager extends VisionManagerBase{
         pitchToSpeaker = getPitchToSpeakerTag();
         yawToSpeaker = calculateYawToSpeaker();
         canSeeNote = intakeCamera.canSeeTarget();
+        latency = intakeCamera.getLatency();
 
         if(pitchToSpeaker.isPresent() && yawToSpeaker.isPresent()){
             //shooterRPM = 2222;
@@ -201,21 +203,6 @@ public class VisionManager extends VisionManagerBase{
             canSeeTag = false;
         }
 
-        // if(distanceToSpeaker.isEmpty()) {
-        //     //RobotContainer.Driver.rumble(()-> 0);
-        //     shooterRPM = 2222;
-        //     armPitch = Constants.Arm.SHOOT_POSITION_RADIANS;
-        //     withinShootingRange = false;
-        // }
-        // else{
-        //     //RobotContainer.Driver.rumble(()-> 0.5);
-        //     withinShootingRange = true;
-        //     shooterRPM = shooterTable.get(distanceToSpeaker.get());
-        //     armPitch = armTable.get(distanceToSpeaker.get());
-
-        //     SmartDashboard.putNumber("distance to speaker", distanceToSpeaker.get());
-        //     SmartDashboard.putNumber("yaw to speaker", yawToSpeaker.get());
-        // }
 
         if(canSeeNote){
             yawToNote = Optional.of(intakeCamera.getYawToTarget());

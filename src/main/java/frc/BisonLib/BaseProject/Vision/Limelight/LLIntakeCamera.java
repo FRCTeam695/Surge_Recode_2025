@@ -12,6 +12,10 @@ public class LLIntakeCamera {
         return LimelightHelpers.getTX(name);
     }
 
+    public double getLatency(){
+        return LimelightHelpers.getLatency_Pipeline(name) + LimelightHelpers.getLatency_Capture(name);
+    }
+
     public double getPitchToTarget(){
         return LimelightHelpers.getTY(name);
     }
