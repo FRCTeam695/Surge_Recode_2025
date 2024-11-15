@@ -47,6 +47,7 @@ public class TalonFXModule extends BaseModule{
     public final String kModuleType = "TalonFXModule";
 
     private double rot_sample;
+    private Object lock = new Object();
 
     public TalonFXModule(int driveMotorId, int turnMotorId, double absoluteEncoderOffset, int TurnCANCoderId, int moduleIndex){
         super(moduleIndex);
@@ -200,7 +201,13 @@ public class TalonFXModule extends BaseModule{
      * 2DO - Use feedforward on drive motor
      */
     public void setDesiredState(SwerveModuleState desiredState) {
-        Rotation2d latestAngle = getLatestModulePosition().angle;
+        Rotation2d latestAngle;
+
+        // this way drive and odometry cant acess the angle in latestPosition at the same time
+        synchronized(lock){
+            latestAngle = latestPosition.angle;
+        }
+        
         var delta = desiredState.angle.minus(latestAngle);
         if (Math.abs(delta.getDegrees()) > 90.0) {
           desiredState = new SwerveModuleState(
@@ -224,17 +231,17 @@ public class TalonFXModule extends BaseModule{
     @Override
     public SwerveModulePosition getPosition(){
         latestPosition.distanceMeters = getRawDrivePosition() / Constants.Swerve.DRIVING_GEAR_RATIO * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS;
-        getLatestModulePosition().angle = new Rotation2d(getCANCoderRadians());
+
+        // this way drive and odometry cant acess the angle in latestPosition at the same time
+        synchronized (lock){
+            latestPosition.angle = new Rotation2d(getCANCoderRadians());
+        }
         return latestPosition;
     }
 
     @Override
     public SwerveModuleState getState(){
         return new SwerveModuleState(getDriveVelocity(), latestPosition.angle);
-    }
-
-    private synchronized SwerveModulePosition getLatestModulePosition(){
-        return latestPosition;
     }
 
 }
