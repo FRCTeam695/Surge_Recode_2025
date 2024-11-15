@@ -2,7 +2,6 @@ package frc.BisonLib.BaseProject.Swerve.Modules;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import frc.robot.Constants;
@@ -68,11 +67,6 @@ public abstract class  BaseModule {
         return getRawDriveAcceleration() / Constants.Swerve.DRIVING_GEAR_RATIO * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS;
     }
 
-    public SwerveModuleState getState(){
-        return new SwerveModuleState(getDriveVelocity(), new Rotation2d(getCANCoderRadians()));
-    }
-
-    public SwerveModulePosition getPosition(){
-        return new SwerveModulePosition(getRawDrivePosition() / Constants.Swerve.DRIVING_GEAR_RATIO * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS, new Rotation2d(getCANCoderRadians()));
-    }
+    public abstract SwerveModuleState getState();
+    public abstract SwerveModulePosition getPosition();
 }

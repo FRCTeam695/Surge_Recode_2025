@@ -46,7 +46,7 @@ public class SwerveBase extends SubsystemBase {
 
     private final Field2d m_field = new Field2d();
     private final SwerveDrivePoseEstimator odometry;
-    private final AHRS gyro = new AHRS(AHRS.NavXComType.kMXP_SPI);
+    private final AHRS gyro = new AHRS(AHRS.NavXComType.kMXP_SPI, AHRS.NavXUpdateRate.k100Hz);
     private final BuiltInAccelerometer rioAccelerometer = new BuiltInAccelerometer();
     private final LinearFilter xAccelFilter = LinearFilter.movingAverage(5);
     private final LinearFilter yAccelFilter = LinearFilter.movingAverage(5);
@@ -99,7 +99,6 @@ public class SwerveBase extends SubsystemBase {
                             getModulePositions(), 
                             new Pose2d()
                         );
-
 
         SmartDashboard.putData("field", m_field);
     }
@@ -169,10 +168,10 @@ public class SwerveBase extends SubsystemBase {
         var alliance = DriverStation.getAlliance();
               if (alliance.isPresent()) {
                 boolean temp = (alliance.get() == DriverStation.Alliance.Red) ? true : false;
-                SmartDashboard.putBoolean("Alliance", temp);
+                //SmartDasboard.putBoolean("Alliance", temp);
                 return temp;
               }
-        SmartDashboard.putBoolean("Alliance", false);
+        //SmartDasboard.putBoolean("Alliance", false);
         return false;
     }
 
@@ -225,9 +224,9 @@ public class SwerveBase extends SubsystemBase {
         double currentRotation = getGyroHeading().getDegrees();
         double pidOutput = thetaController.calculate(currentRotation, wantedAngle);
 
-        SmartDashboard.putNumber("Swerve/Current Robot Rotation", currentRotation);
-        SmartDashboard.putNumber("Swerve/Setpoint Robot Rotation", wantedAngle);
-        SmartDashboard.putNumber("Swerve/Rotation PID output", pidOutput);
+        //SmartDasboard.putNumber("Swerve/Current Robot Rotation", currentRotation);
+        //SmartDasboard.putNumber("Swerve/Setpoint Robot Rotation", wantedAngle);
+        //SmartDasboard.putNumber("Swerve/Rotation PID output", pidOutput);
 
         rotatedToSetpoint = Math.abs(currentRotation - wantedAngle) < 3;
         return MathUtil.clamp(pidOutput, -1, 1) * Constants.Swerve.MAX_ANGULAR_SPEED_RAD_PER_SECOND;
@@ -426,10 +425,10 @@ public class SwerveBase extends SubsystemBase {
                     double new_circumference = distance_traveled/wheel_rotations;
                     avg_calculated_wheel_circumference += new_circumference;
 
-                    SmartDashboard.putNumber("Swerve/Module " + mod.index + "/calculated wheel circumference", new_circumference);
+                    //SmartDasboard.putNumber("Swerve/Module " + mod.index + "/calculated wheel circumference", new_circumference);
                 }
                 avg_calculated_wheel_circumference /= 4;
-                SmartDashboard.putNumber("Swerve/Average Calculated Wheel Circumference", avg_calculated_wheel_circumference);
+                //SmartDasboard.putNumber("Swerve/Average Calculated Wheel Circumference", avg_calculated_wheel_circumference);
             })
         )
         ;
@@ -517,9 +516,9 @@ public class SwerveBase extends SubsystemBase {
 
         // discretizes the chassis speeds (acccounts for robot skew)
         chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, Constants.Swerve.DISCRETIZE_TIMESTAMP);
-        SmartDashboard.putNumber("Swerve/chassis x", chassisSpeeds.vxMetersPerSecond);
-        SmartDashboard.putNumber("Swerve/chassis y", chassisSpeeds.vyMetersPerSecond);
-        SmartDashboard.putNumber("Swerve/chassis omega", chassisSpeeds.omegaRadiansPerSecond);
+        //SmartDasboard.putNumber("Swerve/chassis x", chassisSpeeds.vxMetersPerSecond);
+        //SmartDasboard.putNumber("Swerve/chassis y", chassisSpeeds.vyMetersPerSecond);
+        //SmartDasboard.putNumber("Swerve/chassis omega", chassisSpeeds.omegaRadiansPerSecond);
 
 
         // I derivated whole thing using polar coordinates but the Translation2d turns it back into standard x, y coordinates
@@ -625,10 +624,10 @@ public class SwerveBase extends SubsystemBase {
      * @param voltageSupplier
      */
     public void testModules(DoubleSupplier voltageSupplier){
-        SmartDashboard.putNumber("Swerve/Module 1/Module 1 Current", modules[0].getDriveStatorCurrent());
-        SmartDashboard.putNumber("Swerve/Module 2/Module 2 Current", modules[1].getDriveStatorCurrent());
-        SmartDashboard.putNumber("Swerve/Module 3/Module 3 Current", modules[2].getDriveStatorCurrent());
-        SmartDashboard.putNumber("Swerve/Module 4/Module 4 Current", modules[3].getDriveStatorCurrent());
+        //SmartDasboard.putNumber("Swerve/Module 1/Module 1 Current", modules[0].getDriveStatorCurrent());
+        //SmartDashboard.putNumber("Swerve/Module 2/Module 2 Current", modules[1].getDriveStatorCurrent());
+        //SmartDashboard.putNumber("Swerve/Module 3/Module 3 Current", modules[2].getDriveStatorCurrent());
+        //SmartDashboard.putNumber("Swerve/Module 4/Module 4 Current", modules[3].getDriveStatorCurrent());
 
         for(var mod : modules){
             mod.driveWithVoltage(voltageSupplier.getAsDouble());
@@ -638,15 +637,15 @@ public class SwerveBase extends SubsystemBase {
 
     @Override
     public void periodic() {
-        ChassisSpeeds currentSpeeds = getLatestChassisSpeed();
-        speed = Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
-        double navXAccel = Math.hypot(gyro.getWorldLinearAccelX(), gyro.getWorldLinearAccelY());
-        double rioAccel = Math.hypot(xAccelFilter.calculate(rioAccelerometer.getX()), yAccelFilter.calculate(rioAccelerometer.getY()));
-        if(rioAccel > max_accel){
-            max_accel = rioAccel;
-        }
+        // ChassisSpeeds currentSpeeds = getLatestChassisSpeed();
+        // speed = Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
+        //double navXAccel = Math.hypot(gyro.getWorldLinearAccelX(), gyro.getWorldLinearAccelY());
+        //double rioAccel = Math.hypot(xAccelFilter.calculate(rioAccelerometer.getX()), yAccelFilter.calculate(rioAccelerometer.getY()));
+        // if(rioAccel > max_accel){
+        //     max_accel = rioAccel;
+        // }
 
-        updateOdometryWithKinematics();
+        //updateOdometryWithKinematics();
         //updateOdometryWithVision();
 
 
@@ -654,31 +653,31 @@ public class SwerveBase extends SubsystemBase {
         m_field.setRobotPose(currentRobotPose);
          
 
-        SwerveModuleState[] modStates = getModuleStates();
-        double[] modAccelerations = getModuleAccelerations();
-        SmartDashboard.putNumber("Swerve/gyro heading", getGyroHeading().getDegrees());
+        // SwerveModuleState[] modStates = getModuleStates();
+        // double[] modAccelerations = getModuleAccelerations();
+        // //SmartDashboard.putNumber("Swerve/gyro heading", getGyroHeading().getDegrees());
 
-        SmartDashboard.putNumber("Swerve/Module 1/Module 1 Angle rad", modStates[0].angle.getRadians());
-        SmartDashboard.putNumber("Swerve/Module 2/Module 2 Angle rad", modStates[1].angle.getRadians());
-        SmartDashboard.putNumber("Swerve/Module 3/Module 3 Angle rad", modStates[2].angle.getRadians());
-        SmartDashboard.putNumber("Swerve/Module 4/Module 4 Angle rad", modStates[3].angle.getRadians());
+        // //SmartDashboard.putNumber("Swerve/Module 1/Module 1 Angle rad", modStates[0].angle.getRadians());
+        // //SmartDashboard.putNumber("Swerve/Module 2/Module 2 Angle rad", modStates[1].angle.getRadians());
+        // //SmartDashboard.putNumber("Swerve/Module 3/Module 3 Angle rad", modStates[2].angle.getRadians());
+        // //SmartDashboard.putNumber("Swerve/Module 4/Module 4 Angle rad", modStates[3].angle.getRadians());
 
-        SmartDashboard.putNumber("Swerve/Module 1/Module 1 Velocity", modStates[0].speedMetersPerSecond);
-        SmartDashboard.putNumber("Swerve/Module 2/Module 2 Velocity", modStates[1].speedMetersPerSecond);
-        SmartDashboard.putNumber("Swerve/Module 3/Module 3 Velocity", modStates[2].speedMetersPerSecond);
-        SmartDashboard.putNumber("Swerve/Module 4/Module 4 Velocity", modStates[3].speedMetersPerSecond);
+        // //SmartDashboard.putNumber("Swerve/Module 1/Module 1 Velocity", modStates[0].speedMetersPerSecond);
+        // //SmartDashboard.putNumber("Swerve/Module 2/Module 2 Velocity", modStates[1].speedMetersPerSecond);
+        // //SmartDashboard.putNumber("Swerve/Module 3/Module 3 Velocity", modStates[2].speedMetersPerSecond);
+        // //SmartDashboard.putNumber("Swerve/Module 4/Module 4 Velocity", modStates[3].speedMetersPerSecond);
 
-        SmartDashboard.putNumber("Swerve/Module 1/Module 1 Accel", modAccelerations[0]);
-        SmartDashboard.putNumber("Swerve/Module 2/Module 2 Accel", modAccelerations[1]);
-        SmartDashboard.putNumber("Swerve/Module 3/Module 3 Accel", modAccelerations[2]);
-        SmartDashboard.putNumber("Swerve/Module 4/Module 4 Accel", modAccelerations[3]);
+        // //SmartDashboard.putNumber("Swerve/Module 1/Module 1 Accel", modAccelerations[0]);
+        // //SmartDashboard.putNumber("Swerve/Module 2/Module 2 Accel", modAccelerations[1]);
+        // //SmartDashboard.putNumber("Swerve/Module 3/Module 3 Accel", modAccelerations[2]);
+        // //SmartDashboard.putNumber("Swerve/Module 4/Module 4 Accel", modAccelerations[3]);
 
-        SmartDashboard.putNumber("Swerve/current robot velocity", speed);
-        SmartDashboard.putNumber("Swerve/max rio measured acceleration", max_accel);
-        SmartDashboard.putNumber("Swerve/Current NavX measured acceleration", navXAccel);
-        SmartDashboard.putNumber("Swerve/Current Rio acceleration", rioAccel);
+        // //SmartDashboard.putNumber("Swerve/current robot velocity", speed);
+        // // //SmartDashboard.putNumber("Swerve/max rio measured acceleration", max_accel);
+        // // //SmartDashboard.putNumber("Swerve/Current NavX measured acceleration", navXAccel);
+        // // //SmartDashboard.putNumber("Swerve/Current Rio acceleration", rioAccel);
         
-        SmartDashboard.putBoolean("Swerve/Robot Rotation at Setpoint", robotRotationAtSetpoint());
+        // //SmartDashboard.putBoolean("Swerve/Robot Rotation at Setpoint", robotRotationAtSetpoint());
     }
 }
 

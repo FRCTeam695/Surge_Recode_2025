@@ -1,9 +1,8 @@
 package frc.BisonLib.BaseProject.Swerve.Modules;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
 //import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 //import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -11,9 +10,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
+import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 
 import frc.robot.Constants;
@@ -31,10 +33,13 @@ public class TalonFXModule extends BaseModule{
     /*
      * This PID controller is responsible for turning the wheel
      */
-    private final PIDController turnFeedback;
+    //private final PIDController turnFeedback;
 
     // private final SimpleMotorFeedforward driveFf;
     // private final PIDController driveController;
+
+    private final PositionVoltage rotationSetter = new PositionVoltage(0.0);
+    private SwerveModulePosition latestPosition = new SwerveModulePosition();
 
     /*
      * The type of module that it is
@@ -50,18 +55,22 @@ public class TalonFXModule extends BaseModule{
         turnMotor = new TalonFX(turnMotorId, "drivetrain");
         absoluteEncoder = new CANcoder(TurnCANCoderId, "drivetrain");
 
+        configCANcoder(absoluteEncoderOffset);
         configDriveMotor();
         configTurnMotor();
-        configCANcoder(absoluteEncoderOffset);
 
         //Creates the PID controller for turning
         //turningPidController = new PIDController(0.015, 0.0, 0.0);
-        turnFeedback = new PIDController(Constants.Swerve.MODULE_KP, 0.0, 0);
-        turnFeedback.enableContinuousInput(-180, 180); //Tells the PID controller that 180 and -180 are at the same place
+        //turnFeedback = new PIDController(Constants.Swerve.WHEEL_KP, 0.0, 0);
+        //turnFeedback.enableContinuousInput(-180, 180); //Tells the PID controller that 180 and -180 are at the same place
 
         // driveFf = new SimpleMotorFeedforward(0.011, 0.2);
         // driveController = new PIDController(0.1, 0, 0);
         rot_sample = 0;
+
+        driveMotor.getPosition().setUpdateFrequency(Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ);
+        driveMotor.getVelocity().setUpdateFrequency(Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ);
+        absoluteEncoder.getAbsolutePosition().setUpdateFrequency(Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ);
     }
 
     
@@ -77,7 +86,15 @@ public class TalonFXModule extends BaseModule{
         config.CurrentLimits.StatorCurrentLimitEnable = true;
         config.Audio.AllowMusicDurDisable = true;
 
+        if(Constants.Swerve.MODULE_IS_INVERTED){
+            config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        }
+        else{
+            config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        }
+
         driveMotor.getConfigurator().apply(config);
+        driveMotor.setPosition(0.0);
     }
 
 
@@ -90,6 +107,21 @@ public class TalonFXModule extends BaseModule{
         config.CurrentLimits.SupplyCurrentLimit = 30;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
         config.Audio.AllowMusicDurDisable = true;
+
+        config.Feedback.FeedbackRemoteSensorID = absoluteEncoder.getDeviceID();
+        config.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder;
+        config.Feedback.RotorToSensorRatio = Constants.Swerve.TURNING_GEAR_RATIO;
+
+        if(Constants.Swerve.MODULE_IS_INVERTED){
+            config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        }
+        else{
+            config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        }
+
+        config.Slot0.kP = Constants.Swerve.WHEEL_KP;
+        config.Slot0.kD = Constants.Swerve.WHEEL_KD;
+        config.Slot0.kS = Constants.Swerve.WHEEL_KS;
 
         turnMotor.getConfigurator().apply(config);
     }
@@ -135,19 +167,21 @@ public class TalonFXModule extends BaseModule{
         return driveMotor.getVelocity().getValueAsDouble();
     }
 
+    protected double getRawDrivePosition(){
+        return driveMotor.getPosition().getValueAsDouble();
+    }
+
     protected double getRawDriveAcceleration(){
         return driveMotor.getAcceleration().getValueAsDouble();
     }
 
-    protected double getRawDrivePosition(){
-        return driveMotor.getPosition().getValueAsDouble();
-    }
 
     protected double getCANCoderRadians(){
         double angleRad = absoluteEncoder.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI;
         // SmartDashboard.putNumber("Module " + (this.index + 1) +  " Angle Radians", angleRad);
         // SmartDashboard.putNumber("Module " + (this.index + 1) +  " Angle Degrees", Math.toDegrees(angleRad));
         return angleRad;
+        //return 0;
     }
 
 
@@ -165,32 +199,31 @@ public class TalonFXModule extends BaseModule{
      * 
      * 2DO - Use feedforward on drive motor
      */
-    public void setDesiredState(SwerveModuleState state) {
-        state = SwerveModuleState.optimize(state, new Rotation2d(getCANCoderRadians()));
+    public void setDesiredState(SwerveModuleState desiredState) {
+        Rotation2d latestAngle = latestPosition.angle;
+        desiredState = SwerveModuleState.optimize(desiredState, latestAngle);
         
-        double setpoint = state.angle.getDegrees();
-        double turnMotorOutput;
+        driveMotor.set(Math.cos(Math.abs(desiredState.angle.getRadians() -  latestAngle.getRadians())) * desiredState.speedMetersPerSecond/Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS);
+        turnMotor.setControl(
+            rotationSetter.withPosition(desiredState.angle.getRotations())
+        );
 
-        if(Constants.Swerve.DRIVE_MOTOR_INVERTED){
-            //Multiply by -1 above because the falcon is upside down on MK4i's
-            turnMotorOutput = -1 * MathUtil.clamp(turnFeedback.calculate(Math.toDegrees(getCANCoderRadians()), setpoint), -1, 1);
-        }
-        else{
-            turnMotorOutput =  MathUtil.clamp(turnFeedback.calculate(Math.toDegrees(getCANCoderRadians()), setpoint), -1, 1);
-        }
+        // SmartDashboard.putNumber("Module " + (this.index+1) + "PID output", turnMotorOutput);
+        // SmartDashboard.putNumber("Module " + (this.index+1) + " Desired Velocity", desiredState.speedMetersPerSecond);
+        // SmartDashboard.putNumber("Module " + (this.index+1) + " Rotation Setpoint Rad", desiredState.angle.getRadians());
+        // SmartDashboard.putNumber("Module " + (this.index+1) + " Cosine Error", Math.cos(Math.abs(desiredState.angle.getRadians() -  latestAngle.getRadians())));
+        // SmartDashboard.putNumber("Module " + (this.index+1) + " Latest Angle", latestAngle.getRadians());
+    }
 
-        //double currentVelocity = getDriveVelocity();
+    @Override
+    public SwerveModulePosition getPosition(){
+        latestPosition.distanceMeters = getRawDrivePosition() / Constants.Swerve.DRIVING_GEAR_RATIO * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS;
+        latestPosition.angle = new Rotation2d(getCANCoderRadians());
+        return latestPosition;
+    }
 
-        // if(DriverStation.isAutonomous())
-        //     driveMotor.set(driveController.calculate(currentVelocity, state.speedMetersPerSecond) + driveFf.calculate(state.speedMetersPerSecond));
-        // else{
-        driveMotor.set(Math.cos(Math.toRadians(turnFeedback.getError())) * state.speedMetersPerSecond/Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS);
-        //}
-
-        turnMotor.set(turnMotorOutput);
-
-        SmartDashboard.putNumber("Module " + (this.index+1) + "PID output", turnMotorOutput);
-        SmartDashboard.putNumber("Module " + (this.index+1) + " Desired Velocity", state.speedMetersPerSecond);
-        SmartDashboard.putNumber("Module " + (this.index+1) + " Rotation Setpoint Rad", state.angle.getRadians());
+    @Override
+    public SwerveModuleState getState(){
+        return new SwerveModuleState(getDriveVelocity(), latestPosition.angle);
     }
 }

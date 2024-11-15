@@ -150,23 +150,24 @@ public class Shooter extends SubsystemBase {
   public Command runVelocity(DoubleSupplier velocity) {
     return new FunctionalCommand(
         ()-> {
-          SmartDashboard.putNumber("Commanded Velocity", velocity.getAsDouble());
-          shooterNeo1PID.setIAccum(0);
-          shooterNeo2PID.setIAccum(0);
+          // SmartDashboard.putNumber("Commanded Velocity", velocity.getAsDouble());
+          // shooterNeo1PID.setIAccum(0);
+          // shooterNeo2PID.setIAccum(0);
+          // shooterNeo1PID.
         },
         () -> {
           setPointRPM = velocity.getAsDouble() * maxRPM;
           shooterNeo1PID.setReference(setPointRPM, SparkFlex.ControlType.kVelocity);
           shooterNeo2PID.setReference(-setPointRPM, SparkFlex.ControlType.kVelocity);
 
-          SmartDashboard.putNumber("SetPoint", setPointRPM);
+          //SmartDashboard.putNumber("SetPoint", setPointRPM);
         },
         interrupted-> {
         setPointRPM = 0;
           shooterNeo1PID.setReference(setPointRPM, SparkFlex.ControlType.kVelocity);
           shooterNeo2PID.setReference(-setPointRPM, SparkFlex.ControlType.kVelocity);
 
-          SmartDashboard.putNumber("SetPoint", setPointRPM);
+          //SmartDashboard.putNumber("SetPoint", setPointRPM);
         },
         ()-> (false),
         this

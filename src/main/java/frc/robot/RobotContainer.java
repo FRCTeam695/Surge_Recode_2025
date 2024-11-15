@@ -6,6 +6,7 @@ package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
@@ -73,7 +74,7 @@ public class RobotContainer {
   private final Trigger ampBarDeployed;
   private final Trigger isMovingTooFast;
 
-  private SendableChooser<Command> autoChooser;
+  private final SendableChooser<Command> autoChooser;
 
   public RobotContainer() {
 
@@ -115,6 +116,7 @@ public class RobotContainer {
     // a default command runs when the subsystem is not otherwise required by a different command, look at the docs for more details,
     // https://docs.wpilib.org/en/2021/docs/software/old-commandbased/commands/default-commands.html
     configureDefaultCommands();
+    autoChooser = AutoBuilder.buildAutoChooser();
     sendAutoChooserToDashboard();
 
     // SmartDashboarding subsystems allow you to see what commands they are running
@@ -130,8 +132,8 @@ public class RobotContainer {
   private void sendAutoChooserToDashboard(){
     // This creates our auto chooser and sends it to SmartDashboard, look at pathplanner docs for more details
     // https://pathplanner.dev/home.html
-    autoChooser = AutoBuilder.buildAutoChooser();
-    SmartDashboard.putData("Auto Chooser", autoChooser);
+    // autoChooser = AutoBuilder.buildAutoChooser("myauto");
+     SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
   private void configureBindings() {
@@ -221,7 +223,7 @@ public class RobotContainer {
                 true
               );
               //double tf = System.nanoTime();
-              //System.out.println(tf-ti);
+              //System.out.println((tf-ti)/1000000);
               }
               ,
               Swerve
@@ -232,6 +234,7 @@ public class RobotContainer {
   // The command specified in here is run in autonomous
   public Command getAutonomousCommand() {
     //return new WaitCommand(5);
+    //return new PathPlannerAuto("myauto");
     return autoChooser.getSelected().andThen(()-> Swerve.stopModules());
   }
 
@@ -239,6 +242,9 @@ public class RobotContainer {
     return deadline
         (
         intake(),
+
+
+        
         Swerve.rotateToNote(()-> Driver.getRequestedChassisSpeeds(), ()-> Vision.getYawToNote())
         ).withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming);
   }

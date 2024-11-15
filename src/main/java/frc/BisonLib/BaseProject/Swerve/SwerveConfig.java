@@ -16,6 +16,8 @@ public class SwerveConfig {
         public final double drivingGearRatio;
         public final double turningGearRatio;
         public final double wheelKP;
+        public final double wheelKS;
+        public final double wheelKD;
         public final double pathplannerOmegaKP;
         public final double pathplannerTranslationKP;
         public final double rotationOverrideKP;
@@ -46,7 +48,7 @@ public class SwerveConfig {
          * @param drivingGearRatio The driving gear ratio
          * @param maxSpeedFeetPerSec The maximum speed of the robot in feet per second
          * @param wheelCircumferenceInches The wheel circumference in inches
-         * @param turningKPval The KP value for turning the swerve wheel
+         * @param wheelKP The KP value for turning the swerve wheel
          * @param profiledKPvalPathplanner The KP value for pathplanner when rotating the robot
          * @param wheelbaseInches The wheel base of the robot in inches
          * @param trackwidthInches The track width of the robot in inches
@@ -58,10 +60,10 @@ public class SwerveConfig {
          * @param supplyCurrentLimit The supply current limit for the drive motors
          */
         public SwerveConfig(double frontRightOffset, double frontLeftOffset, double backLeftOffset, double backRightOffset, 
-                            double drivingGearRatio, double maxSpeedFeetPerSec, double wheelCircumferenceInches, double turningKPval,
+                            double drivingGearRatio, double maxSpeedFeetPerSec, double wheelCircumferenceInches, double wheelKP,
                             double profiledKPvalPathplanner, double wheelbaseInches, double trackwidthInches, double maxAngularAccelerationRadPerSecondSquared,
                             double turningGearRatio, boolean driveMotorInverted, double rotationToAngleKPval, double pathplannerTranslationKP,
-                            double maxAccelFeetPerSec, double statorCurrentLimit, double supplyCurrentLimit){
+                            double maxAccelFeetPerSec, double statorCurrentLimit, double supplyCurrentLimit, double wheelKD, double wheelKS){
             
             this.frontRightOffset = frontRightOffset;
             this.frontLeftOffset = frontLeftOffset;
@@ -89,7 +91,9 @@ public class SwerveConfig {
             this.maxAngularAccelerationRadPerSecondSquared = this.maxAccelMetersPerSec / this.frontRightTranslation.getNorm();
             //this.maxAngularAccelerationRadPerSecondSquared = maxAngularAccelerationRadPerSecondSquared;
 
-            this.wheelKP = turningKPval;
+            this.wheelKP = wheelKP;
+            this.wheelKD = wheelKD;
+            this.wheelKS = wheelKS;
             this.pathplannerOmegaKP = profiledKPvalPathplanner;
             this.rotationOverrideKP = rotationToAngleKPval;
             this.pathplannerTranslationKP = pathplannerTranslationKP;
