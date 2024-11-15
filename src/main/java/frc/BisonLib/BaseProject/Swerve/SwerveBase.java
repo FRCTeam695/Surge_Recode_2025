@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.Orchestra;
 import com.studica.frc.AHRS;
+import com.studica.frc.AHRS.NavXUpdateRate;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.*;
 import com.pathplanner.lib.controllers.*;

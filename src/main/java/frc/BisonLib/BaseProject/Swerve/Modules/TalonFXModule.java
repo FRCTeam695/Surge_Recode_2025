@@ -201,7 +201,13 @@ public class TalonFXModule extends BaseModule{
      */
     public void setDesiredState(SwerveModuleState desiredState) {
         Rotation2d latestAngle = latestPosition.angle;
-        desiredState = SwerveModuleState.optimize(desiredState, latestAngle);
+        var delta = desiredState.angle.minus(latestAngle);
+        if (Math.abs(delta.getDegrees()) > 90.0) {
+          desiredState = new SwerveModuleState(
+              -desiredState.speedMetersPerSecond, desiredState.angle.rotateBy(Rotation2d.kPi));
+        } else {
+          desiredState = new SwerveModuleState(desiredState.speedMetersPerSecond, desiredState.angle);
+        }
         
         driveMotor.set(Math.cos(Math.abs(desiredState.angle.getRadians() -  latestAngle.getRadians())) * desiredState.speedMetersPerSecond/Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS);
         turnMotor.setControl(
