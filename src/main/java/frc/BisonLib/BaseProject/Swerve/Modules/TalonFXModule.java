@@ -200,7 +200,7 @@ public class TalonFXModule extends BaseModule{
      * 2DO - Use feedforward on drive motor
      */
     public void setDesiredState(SwerveModuleState desiredState) {
-        Rotation2d latestAngle = latestPosition.angle;
+        Rotation2d latestAngle = getLatestModulePosition().angle;
         var delta = desiredState.angle.minus(latestAngle);
         if (Math.abs(delta.getDegrees()) > 90.0) {
           desiredState = new SwerveModuleState(
@@ -224,7 +224,7 @@ public class TalonFXModule extends BaseModule{
     @Override
     public SwerveModulePosition getPosition(){
         latestPosition.distanceMeters = getRawDrivePosition() / Constants.Swerve.DRIVING_GEAR_RATIO * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS;
-        latestPosition.angle = new Rotation2d(getCANCoderRadians());
+        getLatestModulePosition().angle = new Rotation2d(getCANCoderRadians());
         return latestPosition;
     }
 
@@ -232,4 +232,9 @@ public class TalonFXModule extends BaseModule{
     public SwerveModuleState getState(){
         return new SwerveModuleState(getDriveVelocity(), latestPosition.angle);
     }
+
+    private synchronized SwerveModulePosition getLatestModulePosition(){
+        return latestPosition;
+    }
+
 }

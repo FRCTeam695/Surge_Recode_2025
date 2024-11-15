@@ -15,7 +15,6 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.Orchestra;
 import com.studica.frc.AHRS;
-import com.studica.frc.AHRS.NavXUpdateRate;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.*;
 import com.pathplanner.lib.controllers.*;
@@ -25,7 +24,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
-import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -34,7 +32,6 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.wpilibj.BuiltInAccelerometer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -48,9 +45,9 @@ public class SwerveBase extends SubsystemBase {
     private final Field2d m_field = new Field2d();
     private final SwerveDrivePoseEstimator odometry;
     private final AHRS gyro = new AHRS(AHRS.NavXComType.kMXP_SPI, AHRS.NavXUpdateRate.k100Hz);
-    private final BuiltInAccelerometer rioAccelerometer = new BuiltInAccelerometer();
-    private final LinearFilter xAccelFilter = LinearFilter.movingAverage(5);
-    private final LinearFilter yAccelFilter = LinearFilter.movingAverage(5);
+    // private final BuiltInAccelerometer rioAccelerometer = new BuiltInAccelerometer();
+    // private final LinearFilter xAccelFilter = LinearFilter.movingAverage(5);
+    // private final LinearFilter yAccelFilter = LinearFilter.movingAverage(5);
     private final PIDController thetaController = new PIDController(Constants.Swerve.ROBOT_ROTATION_KP, 0, 0);
 
     protected double max_accel = 0;
@@ -426,10 +423,10 @@ public class SwerveBase extends SubsystemBase {
                     double new_circumference = distance_traveled/wheel_rotations;
                     avg_calculated_wheel_circumference += new_circumference;
 
-                    //SmartDasboard.putNumber("Swerve/Module " + mod.index + "/calculated wheel circumference", new_circumference);
+                    SmartDashboard.putNumber("Swerve/Module " + mod.index + "/calculated wheel circumference", new_circumference);
                 }
                 avg_calculated_wheel_circumference /= 4;
-                //SmartDasboard.putNumber("Swerve/Average Calculated Wheel Circumference", avg_calculated_wheel_circumference);
+                SmartDashboard.putNumber("Swerve/Average Calculated Wheel Circumference", avg_calculated_wheel_circumference);
             })
         )
         ;
