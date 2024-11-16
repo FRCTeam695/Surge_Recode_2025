@@ -161,7 +161,7 @@ public class Swerve extends SwerveBase{
                     Optional<Double> yaw = yawSupplier.get();
                     ChassisSpeeds speeds = speedSupplier.get();
                     if(!yaw.isEmpty()){
-                        double gyro_heading = getGyroHeading().getDegrees();
+                        double gyro_heading = getPose().getRotation().getDegrees();
                         double note_yaw = yaw.get();
                         SmartDashboard.putNumber("Z Gyro Heading", gyro_heading);
                         SmartDashboard.putNumber("Z Note Yaw", note_yaw);
@@ -184,7 +184,7 @@ public class Swerve extends SwerveBase{
                     Optional<Double> yaw = yawSupplier.get();
                     ChassisSpeeds speeds = speedSupplier.get();
                     if(!yaw.isEmpty()){
-                        speeds.omegaRadiansPerSecond = getAngularComponentFromRotationOverride(getGyroHeading().getDegrees() - yaw.get());
+                        speeds.omegaRadiansPerSecond = getAngularComponentFromRotationOverride(getPose().getRotation().getDegrees() - yaw.get());
                     }
                     
                     drive(speeds, true);

@@ -79,7 +79,7 @@ public class RobotContainer {
   public RobotContainer() {
 
     Swerve = new Swerve(cameras, modules);
-    Vision = new VisionManager(cameras, intakeCamera, ()-> Swerve.getGyroHeading().getDegrees());
+    Vision = new VisionManager(cameras, intakeCamera, ()-> Swerve.getPose().getRotation().getDegrees());
     AmpBar = new AmpBar();
     Shooter = new Shooter();
     Intake = new Intake();
@@ -234,8 +234,8 @@ public class RobotContainer {
   // The command specified in here is run in autonomous
   public Command getAutonomousCommand() {
     //return new WaitCommand(5);
-    //return new PathPlannerAuto("myauto");
-    return autoChooser.getSelected().andThen(()-> Swerve.stopModules());
+    return new PathPlannerAuto("myauto");
+    //return autoChooser.getSelected().andThen(()-> Swerve.stopModules());
   }
 
   private Command visionIntake(){

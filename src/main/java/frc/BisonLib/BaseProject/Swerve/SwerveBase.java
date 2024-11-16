@@ -10,6 +10,7 @@ import frc.robot.Constants;
 
 import static edu.wpi.first.wpilibj2.command.Commands.waitSeconds;
 
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -57,6 +58,7 @@ public class SwerveBase extends SubsystemBase {
     protected Pose2d currentRobotPose = new Pose2d();
 
     public final Trigger atRotationSetpoint = new Trigger(()-> robotRotationAtSetpoint());
+    private final ReentrantReadWriteLock odometryLock = new ReentrantReadWriteLock();
 
     /**
      * Does all da constructing
@@ -90,13 +92,18 @@ public class SwerveBase extends SubsystemBase {
 
 
         thetaController.enableContinuousInput(-180, 180);
-        odometry = new SwerveDrivePoseEstimator
-                        (
-                            Constants.Swerve.kDriveKinematics, 
-                            getGyroHeading(),
-                            getModulePositions(), 
-                            new Pose2d()
-                        );
+        odometryLock.writeLock().lock();
+        try{
+            odometry = new SwerveDrivePoseEstimator
+            (
+                Constants.Swerve.kDriveKinematics, 
+                getGyroHeading(),
+                getModulePositions(), 
+                new Pose2d()
+            );
+        }finally{
+            odometryLock.writeLock().unlock();
+        }
 
         SmartDashboard.putData("field", m_field);
     }
@@ -238,7 +245,7 @@ public class SwerveBase extends SubsystemBase {
      * 
      * @returns the angle the gyro is facing expressed as a Rotation2d
      */
-    public synchronized Rotation2d getGyroHeading() {
+    private synchronized Rotation2d getGyroHeading() {
         double gyroAngle = Math.IEEEremainder(gyro.getAngle(), 360);
         return new Rotation2d(-Math.toRadians(gyroAngle));
     }
@@ -272,7 +279,15 @@ public class SwerveBase extends SubsystemBase {
      * @returns the pose2d the odometry is currently reading
      */
     public Pose2d getPose() {
-        return odometry.getEstimatedPosition();
+        Pose2d pose;
+        odometryLock.readLock().lock();
+        try{
+            pose = odometry.getEstimatedPosition();
+        }finally{
+            odometryLock.readLock().unlock();
+        }
+
+        return pose;
     }
 
 
@@ -356,10 +371,15 @@ public class SwerveBase extends SubsystemBase {
      */
     public void resetOdometry(Pose2d pose) {
         setGyro(pose.getRotation().getDegrees());
-        odometry.resetPosition(
+        odometryLock.writeLock().lock();
+        try{
+            odometry.resetPosition(
                 getGyroHeading(),
                 getModulePositions(),
                 pose);
+        }finally{
+            odometryLock.writeLock().unlock();
+        }
     }
 
 
@@ -590,7 +610,9 @@ public class SwerveBase extends SubsystemBase {
             if(visionPacket.isValidPose && gyro.getRate() < 720){
 
                 // Finally, we actually add the measurement to our odometry
-                odometry.addVisionMeasurement
+                odometryLock.writeLock().lock();
+                try{
+                    odometry.addVisionMeasurement
                     (
                         visionPacket.pose, 
                         visionPacket.timestamp,
@@ -598,6 +620,9 @@ public class SwerveBase extends SubsystemBase {
                         // This way it doesn't trust the rotation reading from the vision
                         VecBuilder.fill(visionPacket.stdDev, visionPacket.stdDev, 999999)
                     );
+                }finally{
+                    odometryLock.writeLock().unlock();
+                }
                 
                 // This puts the pose reading from each camera onto the Field2d Widget,
                 // Docs - https://docs.wpilib.org/en/stable/docs/software/dashboards/glass/field2d-widget.html
@@ -608,9 +633,14 @@ public class SwerveBase extends SubsystemBase {
 
 
     public void updateOdometryWithKinematics(){
-        odometry.update( 
-            getGyroHeading(),
-            getModulePositions());
+        odometryLock.writeLock().lock();
+        try{
+            odometry.update( 
+                getGyroHeading(),
+                getModulePositions());
+        }finally{
+            odometryLock.writeLock().unlock();
+        }
     }
 
 
