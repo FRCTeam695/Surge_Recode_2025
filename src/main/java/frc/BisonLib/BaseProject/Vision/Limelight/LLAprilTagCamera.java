@@ -30,7 +30,7 @@ public class LLAprilTagCamera extends AprilTagCamera{
     public VisionPosePacket getLatestVisionUpdate(double yaw){
         LimelightHelpers.SetRobotOrientation(super.kCamName, yaw, 0, 0, 0, 0, 0);
         LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(super.kCamName);
-        return new VisionPosePacket(mt2.timestampSeconds, mt2.pose, mt2.avgTagDist * translation_slope, !(mt2.tagCount == 0));
+        return new VisionPosePacket(mt2.timestampSeconds, mt2.pose, mt2.avgTagDist * translation_slope, !(mt2.tagCount == 0), kCamName);
     }  
 
 

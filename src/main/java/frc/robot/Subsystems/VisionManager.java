@@ -1,7 +1,6 @@
 package frc.robot.Subsystems;
 
 import java.util.Optional;
-import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -33,8 +32,8 @@ public class VisionManager extends VisionManagerBase{
     public Trigger canIntakeNote;
     public LLIntakeCamera intakeCamera;
 
-    public VisionManager(AprilTagCamera[] cameras, LLIntakeCamera intakeCamera, DoubleSupplier headingSupplier){
-        super(cameras, headingSupplier);
+    public VisionManager(AprilTagCamera[] cameras, LLIntakeCamera intakeCamera){
+        super(cameras);
 
         this.intakeCamera = intakeCamera;
 

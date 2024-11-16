@@ -11,7 +11,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.BisonLib.BaseProject.Swerve.SwerveBase;
 import frc.BisonLib.BaseProject.Swerve.Modules.BaseModule;
-import frc.BisonLib.BaseProject.Vision.AprilTagCamera;
 import frc.robot.RobotContainer;
 
 public class Swerve extends SwerveBase{
@@ -21,8 +20,8 @@ public class Swerve extends SwerveBase{
     public boolean hasSeenNote;
     public Pose2d notePose;
 
-    public Swerve(AprilTagCamera[] cameras, BaseModule[] modules) {
-        super(cameras, modules);
+    public Swerve(VisionManager visionManager, BaseModule[] modules) {
+        super(visionManager, modules);
 
         hasSeenNote = false;
         notePose = new Pose2d();

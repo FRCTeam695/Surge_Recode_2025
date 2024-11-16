@@ -7,11 +7,14 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class VisionManagerBase extends SubsystemBase{
 
     protected final AprilTagCamera[] cameras;
-    protected final DoubleSupplier swerveHeadingSupplier;
+    protected DoubleSupplier swerveHeadingSupplier;
     
-    public VisionManagerBase(AprilTagCamera[] cameras, DoubleSupplier swerveHeadingSupplier){
+    public VisionManagerBase(AprilTagCamera[] cameras){
         this.cameras = cameras;
-        this.swerveHeadingSupplier = swerveHeadingSupplier;
+    }
+
+    public void setHeadingSupplier(DoubleSupplier headingSupplier){
+        swerveHeadingSupplier = headingSupplier;
     }
 
     public VisionPosePacket[] getPoses(){

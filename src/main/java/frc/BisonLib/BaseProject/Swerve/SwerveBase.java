@@ -4,7 +4,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.BisonLib.BaseProject.Swerve.Modules.BaseModule;
-import frc.BisonLib.BaseProject.Vision.AprilTagCamera;
+import frc.BisonLib.BaseProject.Vision.VisionManagerBase;
 import frc.BisonLib.BaseProject.Vision.VisionPosePacket;
 import frc.robot.Constants;
 
@@ -41,11 +41,15 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class SwerveBase extends SubsystemBase {
 
     protected BaseModule[] modules;
-    protected final AprilTagCamera[] cameras;
+    protected final VisionManagerBase visionManager;
 
     private final Field2d m_field = new Field2d();
     private final SwerveDrivePoseEstimator odometry;
+
+    // NEVER DIRECTLY CALL ANY GYRO METHODS, ALWAYS USE THE SYNCHRONIZED GYRO LOCK!!
     private final AHRS gyro = new AHRS(AHRS.NavXComType.kMXP_SPI, 175);
+
+
     // private final BuiltInAccelerometer rioAccelerometer = new BuiltInAccelerometer();
     // private final LinearFilter xAccelFilter = LinearFilter.movingAverage(5);
     // private final LinearFilter yAccelFilter = LinearFilter.movingAverage(5);
@@ -59,6 +63,7 @@ public class SwerveBase extends SubsystemBase {
 
     public final Trigger atRotationSetpoint = new Trigger(()-> robotRotationAtSetpoint());
     private final ReentrantReadWriteLock odometryLock = new ReentrantReadWriteLock();
+    private final Object gyroLock = new Object();
 
     /**
      * Does all da constructing
@@ -66,9 +71,9 @@ public class SwerveBase extends SubsystemBase {
      * @param cameras An array of cameras used for pose estinmation
      * @param moduleTypes The type of swerve module on the swerve drive
      */
-    public SwerveBase(AprilTagCamera[] cameras, BaseModule[] modules) {
+    public SwerveBase(VisionManagerBase visionManager, BaseModule[] modules) {
 
-        this.cameras = cameras;
+        this.visionManager = visionManager;
 
         // Holds all the modules
         this.modules = modules;
@@ -203,8 +208,10 @@ public class SwerveBase extends SubsystemBase {
      * @param degrees the degree value that the gyro should be set to
      */
     public void setGyro(double degrees){
-        gyro.reset();
-        gyro.setAngleAdjustment(-degrees);
+        synchronized(gyroLock){
+            gyro.reset();
+            gyro.setAngleAdjustment(-degrees);
+        }
     }
 
 
@@ -226,7 +233,7 @@ public class SwerveBase extends SubsystemBase {
      * @return The new rotation component as calculated by the rotation override
      */
     public double getAngularComponentFromRotationOverride(double wantedAngle){
-        double currentRotation = getGyroHeading().getDegrees();
+        double currentRotation = getPose().getRotation().getDegrees();
         double pidOutput = thetaController.calculate(currentRotation, wantedAngle);
 
         //SmartDasboard.putNumber("Swerve/Current Robot Rotation", currentRotation);
@@ -245,31 +252,16 @@ public class SwerveBase extends SubsystemBase {
      * 
      * @returns the angle the gyro is facing expressed as a Rotation2d
      */
-    private synchronized Rotation2d getGyroHeading() {
-        double gyroAngle = Math.IEEEremainder(gyro.getAngle(), 360);
-        return new Rotation2d(-Math.toRadians(gyroAngle));
+    private Rotation2d getGyroHeading() {
+        synchronized (gyroLock){
+            return new Rotation2d(-Math.toRadians(Math.IEEEremainder(gyro.getAngle(), 360)));
+        }
     }
 
-
-    /**
-     * getYawToTag returns the yaw from the specified camera to the specified april tag
-     * 
-     * @param cameraName The name of the camera we want to retrieve the yaw from
-     * @param ID The ID of the tag we want to retrieve the yaw from
-     * 
-     * @return A Double with the yaw to target, null if target cannot be seen
-     */
-    public Double getYawToTag(String cameraName, int ID){
-        for(var camera : cameras){
-
-            // Finds the desired camera
-            if(camera.kCamName.equals(cameraName)){
-
-                // Gets the yaw from the desired tag
-                return camera.getYawToTag(ID);
-            }
+    private double getGyroRate() {
+        synchronized (gyroLock){
+            return gyro.getRate();
         }
-        return null;
     }
 
 
@@ -422,14 +414,14 @@ public class SwerveBase extends SubsystemBase {
             for(var mod : modules){
                 mod.start_rotation_sample();
             }
-            initialGyroAngle = gyro.getAngle();
+            initialGyroAngle = getGyroHeading().getDegrees() + 180;
           }  
         ))
         .andThen(
             run(()-> {
 
                 // closed loop control to turn in place one rotation
-                double error = Math.abs(360 - Math.abs(gyro.getAngle() - initialGyroAngle));
+                double error = Math.abs(360 - Math.abs(getGyroHeading().getDegrees()+180 - initialGyroAngle));
                 for(var mod : modules){
                     mod.setDesiredState(new SwerveModuleState(error * 0.00277777777, Rotation2d.fromDegrees(45 + mod.index * 90)));
                 }
@@ -574,7 +566,7 @@ public class SwerveBase extends SubsystemBase {
             return;
         }
 
-        driveFromSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(speedsSupplier.get(), getGyroHeading()));
+        driveFromSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(speedsSupplier.get(), getPose().getRotation()));
     }
     
     /**
@@ -587,7 +579,7 @@ public class SwerveBase extends SubsystemBase {
     public void drive(ChassisSpeeds speeds, boolean fieldOriented){
 
         if (fieldOriented) {
-            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getGyroHeading());
+            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getPose().getRotation());
         }
 
         this.driveFromSpeeds(speeds);
@@ -598,27 +590,23 @@ public class SwerveBase extends SubsystemBase {
      * updateOdometryWithVision uses vision to add measurements to the odometry
      */
     public void updateOdometryWithVision(){
+        VisionPosePacket[] poses = visionManager.getPoses();
 
-        // loop through all of our cameras, and add poses from each one
-        for(var camera : cameras){
-
-            // Get the latest packet from the camera
-            // VisionPacket is a custom helper class that contains all the relavent info for pose estimation
-            VisionPosePacket visionPacket = camera.getLatestVisionUpdate(getGyroHeading().getDegrees());
+        for(var pose : poses){
 
             // Only update pose if it is valid and if we arent spinning too fast
-            if(visionPacket.isValidPose && gyro.getRate() < 720){
+            if(pose.isValidPose && getGyroRate() < 720){
 
                 // Finally, we actually add the measurement to our odometry
                 odometryLock.writeLock().lock();
                 try{
                     odometry.addVisionMeasurement
                     (
-                        visionPacket.pose, 
-                        visionPacket.timestamp,
+                        pose.pose, 
+                        pose.timestamp,
                         
                         // This way it doesn't trust the rotation reading from the vision
-                        VecBuilder.fill(visionPacket.stdDev, visionPacket.stdDev, 999999)
+                        VecBuilder.fill(pose.stdDev, pose.stdDev, 999999)
                     );
                 }finally{
                     odometryLock.writeLock().unlock();
@@ -626,7 +614,7 @@ public class SwerveBase extends SubsystemBase {
                 
                 // This puts the pose reading from each camera onto the Field2d Widget,
                 // Docs - https://docs.wpilib.org/en/stable/docs/software/dashboards/glass/field2d-widget.html
-                m_field.getObject(camera.kCamName).setPose(visionPacket.pose);
+                m_field.getObject(pose.name).setPose(pose.pose);
             }
         }  
     }

@@ -78,8 +78,9 @@ public class RobotContainer {
 
   public RobotContainer() {
 
-    Swerve = new Swerve(cameras, modules);
-    Vision = new VisionManager(cameras, intakeCamera, ()-> Swerve.getPose().getRotation().getDegrees());
+    Vision = new VisionManager(cameras, intakeCamera);
+    Swerve = new Swerve(Vision, modules);
+    Vision.setHeadingSupplier(()-> Swerve.getPose().getRotation().getDegrees());
     AmpBar = new AmpBar();
     Shooter = new Shooter();
     Intake = new Intake();

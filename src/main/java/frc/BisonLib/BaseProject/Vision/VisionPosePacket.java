@@ -11,18 +11,21 @@ public class VisionPosePacket {
     public Pose2d pose;
     public double stdDev;
     public boolean isValidPose;
+    public String name;
 
     /**
      * @param timestamp The time when the pose was taken
      * @param pose The pose from vision
      * @param stdDev The standard deviation calculated from vision (how accurate it thinks the pose is)
      * @param isValidPose If the pose is valid or not (If the camera doesn't see any tags it returns the last recorded pose)
+     * @param name the name of the camera
      */
-    public VisionPosePacket(double timestamp, Pose2d pose, double stdDev, boolean isValidPose){
+    public VisionPosePacket(double timestamp, Pose2d pose, double stdDev, boolean isValidPose, String name){
         this.timestamp = timestamp;
         this.pose = pose;
         this.stdDev = stdDev;
         this.isValidPose = isValidPose;
+        this.name = name;
     }
 
     public VisionPosePacket(){
