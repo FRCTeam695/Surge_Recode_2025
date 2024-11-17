@@ -59,7 +59,6 @@ public class SwerveBase extends SubsystemBase {
     protected double speed = 0;
     protected double initialGyroAngle = 0;
     protected boolean rotatedToSetpoint = false;
-    protected Pose2d currentRobotPose = new Pose2d();
 
     public final Trigger atRotationSetpoint = new Trigger(()-> robotRotationAtSetpoint());
     public PPHolonomicDriveController pathplannerController =  new PPHolonomicDriveController( // HolonomicPathFollowerConfig, this should likely live in your Constants class
@@ -74,6 +73,9 @@ public class SwerveBase extends SubsystemBase {
 
     // this is a lock to make sure nobody acesses our gyro while odometry is updating it
     private final Object gyroLock = new Object();
+
+    private Pose2d currentRobotPose = new Pose2d();
+    private SwerveModulePosition[] currentModulePositions = new SwerveModulePosition[4];
 
     /**
      * Does all da constructing
@@ -357,12 +359,11 @@ public class SwerveBase extends SubsystemBase {
     public void resetOdometry(Pose2d pose) {
         setGyro(pose.getRotation().getDegrees());
         Rotation2d gyroHeading = getGyroHeading();
-        SwerveModulePosition[] modulePositions = getModulePositions();
         odometryLock.writeLock().lock();
         try{
             odometry.resetPosition(
                 gyroHeading,
-                modulePositions,
+                currentModulePositions,
                 pose);
         }finally{
             odometryLock.writeLock().unlock();
@@ -616,14 +617,14 @@ public class SwerveBase extends SubsystemBase {
 
 
     public void updateOdometryWithKinematics(){
-        SwerveModulePosition[] modulePositions = getModulePositions();
+        currentModulePositions = getModulePositions();
         Rotation2d gyroHeading = getGyroHeading();
         odometryLock.writeLock().lock();
         try{
             currentRobotPose = odometry.updateWithTime(
                 Timer.getFPGATimestamp(),
                 gyroHeading,
-                modulePositions);
+                currentModulePositions);
         }finally{
             odometryLock.writeLock().unlock();
         }
