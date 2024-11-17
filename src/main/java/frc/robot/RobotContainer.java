@@ -7,6 +7,7 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.events.EventTrigger;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
@@ -80,7 +81,7 @@ public class RobotContainer {
 
     Vision = new VisionManager(cameras, intakeCamera);
     Swerve = new Swerve(Vision, modules);
-    Vision.setHeadingSupplier(()-> Swerve.getPose().getRotation().getDegrees());
+    Vision.setHeadingSupplier(()-> Swerve.getSavedPose().getRotation().getDegrees());
     AmpBar = new AmpBar();
     Shooter = new Shooter();
     Intake = new Intake();
@@ -90,6 +91,22 @@ public class RobotContainer {
 
     isReadyToShoot = Swerve.atRotationSetpoint.and(Shooter.atVelocitySetpoint).and(Arm.atPositionSetpoint).and(isMovingTooFast.negate()).and(Vision.tagInSight);
     ampBarDeployed = new Trigger(AmpBar::isDeployed);
+
+
+    new EventTrigger("Intake").onTrue(
+      deadline(
+      intake()
+      //, drive to note with poses
+      )
+      
+    );
+    NamedCommands.registerCommand("Mid First Shot",
+      deadline(
+      Arm.goToPosition(()-> Constants.Arm.SHOOT_POSITION_RADIANS),
+      Shooter.runVelocity(()-> 2222.0/5700)
+      ).andThen(shoot(()-> 2222).withTimeout(2).andThen(LEDs.turnColorOff()))
+    );
+
 
 
     NamedCommands.registerCommand("Intake Note", intake());

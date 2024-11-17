@@ -43,11 +43,11 @@ public class SwerveBase extends SubsystemBase {
     protected BaseModule[] modules;
     protected final VisionManagerBase visionManager;
 
-    private final Field2d m_field = new Field2d();
+    protected final Field2d m_field = new Field2d();
     private final SwerveDrivePoseEstimator odometry;
 
     // NEVER DIRECTLY CALL ANY GYRO METHODS, ALWAYS USE THE SYNCHRONIZED GYRO LOCK!!
-    private final AHRS gyro = new AHRS(AHRS.NavXComType.kMXP_SPI, 175);
+    private final AHRS gyro = new AHRS(AHRS.NavXComType.kMXP_SPI, Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ);
 
 
     // private final BuiltInAccelerometer rioAccelerometer = new BuiltInAccelerometer();
@@ -62,7 +62,17 @@ public class SwerveBase extends SubsystemBase {
     protected Pose2d currentRobotPose = new Pose2d();
 
     public final Trigger atRotationSetpoint = new Trigger(()-> robotRotationAtSetpoint());
+    public PPHolonomicDriveController pathplannerController =  new PPHolonomicDriveController( // HolonomicPathFollowerConfig, this should likely live in your Constants class
+                                                                new PIDConstants(6, 0.0, 0.1), // Translation PID constants (JPK was 6,0,0)
+                                                                new PIDConstants(5, 0.0, 0.0) // Rotation PID constants (JPK was 2)
+                                                                );
+
+
+
+    // this is a lock to make sure nobody acesses our pose while odometry is updating it
     private final ReentrantReadWriteLock odometryLock = new ReentrantReadWriteLock();
+
+    // this is a lock to make sure nobody acesses our gyro while odometry is updating it
     private final Object gyroLock = new Object();
 
     /**
@@ -97,13 +107,17 @@ public class SwerveBase extends SubsystemBase {
 
 
         thetaController.enableContinuousInput(-180, 180);
+
+
+        Rotation2d gyroHeading = getGyroHeading();
+        SwerveModulePosition[] modulePositions = getModulePositions();
         odometryLock.writeLock().lock();
         try{
             odometry = new SwerveDrivePoseEstimator
             (
                 Constants.Swerve.kDriveKinematics, 
-                getGyroHeading(),
-                getModulePositions(), 
+                gyroHeading,
+                modulePositions,
                 new Pose2d()
             );
         }finally{
@@ -156,14 +170,11 @@ public class SwerveBase extends SubsystemBase {
 
         // Configure the AutoBuilder last
         AutoBuilder.configure(
-                this::getPose, // Robot pose supplier
+                this::getSavedPose, // Robot pose supplier
                 this::resetOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
                 this::getLatestChassisSpeed, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
                 (speeds, feedforwards) -> driveFromSpeeds(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-                new PPHolonomicDriveController( // HolonomicPathFollowerConfig, this should likely live in your Constants class
-                    new PIDConstants(6, 0.0, 0.1), // Translation PID constants (JPK was 6,0,0)
-                    new PIDConstants(5, 0.0, 0.0) // Rotation PID constants (JPK was 2)
-                ),
+                pathplannerController,
                 config,
                 this::isRedAlliance,
             this // Reference to this subsystem to set requirements
@@ -233,7 +244,7 @@ public class SwerveBase extends SubsystemBase {
      * @return The new rotation component as calculated by the rotation override
      */
     public double getAngularComponentFromRotationOverride(double wantedAngle){
-        double currentRotation = getPose().getRotation().getDegrees();
+        double currentRotation = currentRobotPose.getRotation().getDegrees();
         double pidOutput = thetaController.calculate(currentRotation, wantedAngle);
 
         //SmartDasboard.putNumber("Swerve/Current Robot Rotation", currentRotation);
@@ -266,24 +277,6 @@ public class SwerveBase extends SubsystemBase {
 
 
     /**
-     * This should be called instead of getGyroHeading if you want to get the robot heading.
-     * 
-     * @returns the pose2d the odometry is currently reading
-     */
-    public Pose2d getPose() {
-        Pose2d pose;
-        odometryLock.readLock().lock();
-        try{
-            pose = odometry.getEstimatedPosition();
-        }finally{
-            odometryLock.readLock().unlock();
-        }
-
-        return pose;
-    }
-
-
-    /**
      * calculates the distance from the current robot pose to the supplied translation,
      * can be potentially used for figuring out if the robot is in some specific zone
      * 
@@ -291,7 +284,7 @@ public class SwerveBase extends SubsystemBase {
      * @return The distance from the robot pose to the other supplied translation
      */
     public double getDistanceToTranslation(Translation2d other){
-        return getPose().getTranslation().getDistance(other);
+        return currentRobotPose.getTranslation().getDistance(other);
     }
 
 
@@ -363,11 +356,13 @@ public class SwerveBase extends SubsystemBase {
      */
     public void resetOdometry(Pose2d pose) {
         setGyro(pose.getRotation().getDegrees());
+        Rotation2d gyroHeading = getGyroHeading();
+        SwerveModulePosition[] modulePositions = getModulePositions();
         odometryLock.writeLock().lock();
         try{
             odometry.resetPosition(
-                getGyroHeading(),
-                getModulePositions(),
+                gyroHeading,
+                modulePositions,
                 pose);
         }finally{
             odometryLock.writeLock().unlock();
@@ -414,14 +409,14 @@ public class SwerveBase extends SubsystemBase {
             for(var mod : modules){
                 mod.start_rotation_sample();
             }
-            initialGyroAngle = getGyroHeading().getDegrees() + 180;
+            initialGyroAngle = getSavedPose().getRotation().getDegrees() + 180;
           }  
         ))
         .andThen(
             run(()-> {
 
                 // closed loop control to turn in place one rotation
-                double error = Math.abs(360 - Math.abs(getGyroHeading().getDegrees()+180 - initialGyroAngle));
+                double error = Math.abs(360 - Math.abs(getSavedPose().getRotation().getDegrees()+180 - initialGyroAngle));
                 for(var mod : modules){
                     mod.setDesiredState(new SwerveModuleState(error * 0.00277777777, Rotation2d.fromDegrees(45 + mod.index * 90)));
                 }
@@ -566,7 +561,7 @@ public class SwerveBase extends SubsystemBase {
             return;
         }
 
-        driveFromSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(speedsSupplier.get(), getPose().getRotation()));
+        driveFromSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(speedsSupplier.get(), currentRobotPose.getRotation()));
     }
     
     /**
@@ -579,7 +574,7 @@ public class SwerveBase extends SubsystemBase {
     public void drive(ChassisSpeeds speeds, boolean fieldOriented){
 
         if (fieldOriented) {
-            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getPose().getRotation());
+            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, currentRobotPose.getRotation());
         }
 
         this.driveFromSpeeds(speeds);
@@ -621,11 +616,14 @@ public class SwerveBase extends SubsystemBase {
 
 
     public void updateOdometryWithKinematics(){
+        SwerveModulePosition[] modulePositions = getModulePositions();
+        Rotation2d gyroHeading = getGyroHeading();
         odometryLock.writeLock().lock();
         try{
-            odometry.update( 
-                getGyroHeading(),
-                getModulePositions());
+            currentRobotPose = odometry.updateWithTime(
+                Timer.getFPGATimestamp(),
+                gyroHeading,
+                modulePositions);
         }finally{
             odometryLock.writeLock().unlock();
         }
@@ -650,6 +648,17 @@ public class SwerveBase extends SubsystemBase {
         }
     }
 
+    public Pose2d getSavedPose(){
+        Pose2d pose;
+        odometryLock.readLock().lock();
+        try{
+            pose = currentRobotPose;
+        }finally{
+            odometryLock.readLock().unlock();
+        }
+        return pose;
+    }
+
 
     @Override
     public void periodic() {
@@ -665,14 +674,12 @@ public class SwerveBase extends SubsystemBase {
         //updateOdometryWithVision();
 
 
-        currentRobotPose = getPose();
         SmartDashboard.putNumber("Gyro Update Rate", gyro.getActualUpdateRate());
         m_field.setRobotPose(currentRobotPose);
          
 
         // SwerveModuleState[] modStates = getModuleStates();
         // double[] modAccelerations = getModuleAccelerations();
-        // //SmartDashboard.putNumber("Swerve/gyro heading", getGyroHeading().getDegrees());
 
         // //SmartDashboard.putNumber("Swerve/Module 1/Module 1 Angle rad", modStates[0].angle.getRadians());
         // //SmartDashboard.putNumber("Swerve/Module 2/Module 2 Angle rad", modStates[1].angle.getRadians());

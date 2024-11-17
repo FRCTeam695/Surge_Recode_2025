@@ -37,14 +37,14 @@ public class Swerve extends SwerveBase{
         return
         runOnce(
             ()->{
-                startTranslation = getPose().getTranslation();
+                startTranslation = getSavedPose().getTranslation();
             }
         )
         .andThen(
             run
             (
                 ()-> {
-                    if(getPose().getTranslation().getDistance(startTranslation) < 1.5){
+                    if(getSavedPose().getTranslation().getDistance(startTranslation) < 1.5){
                         Optional<Double> yaw = yawToNote.get();
                         if(yaw.isPresent()){
                             double altered_vx, altered_vy;
@@ -111,14 +111,14 @@ public class Swerve extends SwerveBase{
         return
         runOnce(
             ()->{
-                startTranslation = getPose().getTranslation();
+                startTranslation = getSavedPose().getTranslation();
             }
         )
         .andThen(
             run
             (
                 ()-> {
-                    if(getPose().getTranslation().getDistance(startTranslation) < 1.5){
+                    if(getSavedPose().getTranslation().getDistance(startTranslation) < 1.5){
                         Optional<Double> yaw = yawToNote.get();
                         if(yaw.isPresent()){
                             double altered_vx, altered_vy;
@@ -160,7 +160,7 @@ public class Swerve extends SwerveBase{
                     Optional<Double> yaw = yawSupplier.get();
                     ChassisSpeeds speeds = speedSupplier.get();
                     if(!yaw.isEmpty()){
-                        double gyro_heading = getPose().getRotation().getDegrees();
+                        double gyro_heading = getSavedPose().getRotation().getDegrees();
                         double note_yaw = yaw.get();
                         SmartDashboard.putNumber("Z Gyro Heading", gyro_heading);
                         SmartDashboard.putNumber("Z Note Yaw", note_yaw);
@@ -183,7 +183,7 @@ public class Swerve extends SwerveBase{
                     Optional<Double> yaw = yawSupplier.get();
                     ChassisSpeeds speeds = speedSupplier.get();
                     if(!yaw.isEmpty()){
-                        speeds.omegaRadiansPerSecond = getAngularComponentFromRotationOverride(getPose().getRotation().getDegrees() - yaw.get());
+                        speeds.omegaRadiansPerSecond = getAngularComponentFromRotationOverride(getSavedPose().getRotation().getDegrees() - yaw.get());
                     }
                     
                     drive(speeds, true);
@@ -204,14 +204,16 @@ public class Swerve extends SwerveBase{
                     ()->{
                         ChassisSpeeds speeds = speedsSupplier.get();
                         Optional<Transform2d> transform = noteTransform.get();
+                        Pose2d robotPose = getSavedPose();
                         if(transform.isPresent()){
-                            notePose = currentRobotPose.plus(transform.get());
+                            notePose = robotPose.plus(transform.get());
+                            m_field.getObject("targeted note").setPose(notePose);
                             hasSeenNote = true;
                         }
                         if(hasSeenNote){
                             RobotContainer.Driver.rumble(()-> 0.65);
                             double altered_vx, altered_vy;
-                            double yaw = notePose.minus(currentRobotPose).getTranslation().getAngle().getDegrees();
+                            double yaw = notePose.minus(robotPose).getTranslation().getAngle().getDegrees();
                             altered_vy = 0.06 * yaw;
                             double wanted_vel = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
     
