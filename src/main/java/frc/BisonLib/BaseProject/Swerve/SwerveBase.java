@@ -3,7 +3,7 @@ package frc.BisonLib.BaseProject.Swerve;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.BisonLib.BaseProject.Swerve.Modules.BaseModule;
+import frc.BisonLib.BaseProject.Swerve.Modules.TalonFXModule;
 import frc.BisonLib.BaseProject.Vision.VisionManagerBase;
 import frc.BisonLib.BaseProject.Vision.VisionPosePacket;
 import frc.robot.Constants;
@@ -45,7 +45,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class SwerveBase extends SubsystemBase {
 
-    protected BaseModule[] modules;
+    protected TalonFXModule[] modules;
     protected final VisionManagerBase visionManager;
 
     protected final Field2d m_field = new Field2d();
@@ -98,7 +98,7 @@ public class SwerveBase extends SubsystemBase {
      * @param cameras An array of cameras used for pose estinmation
      * @param moduleTypes The type of swerve module on the swerve drive
      */
-    public SwerveBase(VisionManagerBase visionManager, BaseModule[] modules) {
+    public SwerveBase(VisionManagerBase visionManager, TalonFXModule[] modules) {
         allOdomSignals = new BaseStatusSignal[(4 * 3)];
         for(int i = 0; i < modules.length; ++i){
             var signals = modules[0].getOdometrySignals();
@@ -119,7 +119,7 @@ public class SwerveBase extends SubsystemBase {
         } catch (Exception e) {
         // Handle exception as needed
             e.printStackTrace();
-            config = new RobotConfig(74.088, 6.883, new ModuleConfig(0.048, 5.450, 1.1, DCMotor.getFalcon500(1), 60, 4), 0.546, 0.546);
+            config = new RobotConfig(58.967, 6.883, new ModuleConfig(0.051, 5.3, 1.15, DCMotor.getFalcon500(1), 40, 4), 0.572, 0.572);
         }
 
         initAutoBuilder(config);
@@ -130,7 +130,7 @@ public class SwerveBase extends SubsystemBase {
         * also sets each module state to present
         */
 
-        //maybe have this keep trying to reset the gyro
+        //maybe have this keep trying to reset the gyro if it fails once
         new Thread(() -> {
             try {
                 Thread.sleep(1000);
@@ -685,10 +685,10 @@ public class SwerveBase extends SubsystemBase {
 
 
     public void updateOdometryWithKinematics(){
-        lastTime = currentTime;
-        currentTime = Timer.getFPGATimestamp();
-        inc++;
-        totalLoopTime += (currentTime-lastTime);
+        // lastTime = currentTime;
+        // currentTime = Timer.getFPGATimestamp();
+        // inc++;
+        // totalLoopTime += (currentTime-lastTime);
         //SmartDashboard.putNumber("avg loop time", totalLoopTime/inc);
 
         BaseStatusSignal.waitForAll(1.0 / Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ_INTEGER, allOdomSignals);
@@ -738,6 +738,9 @@ public class SwerveBase extends SubsystemBase {
 
     @Override
     public void periodic() {
+        //modules[0].setTurnMotor(1);
+        SmartDashboard.putNumber("turn motor speed", modules[0].getTurnVelocity());
+
         // ChassisSpeeds currentSpeeds = getLatestChassisSpeed();
         // speed = Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
         //double navXAccel = Math.hypot(gyro.getWorldLinearAccelX(), gyro.getWorldLinearAccelY());

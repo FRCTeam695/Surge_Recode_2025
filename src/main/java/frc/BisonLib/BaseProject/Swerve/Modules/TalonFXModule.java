@@ -24,7 +24,7 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 
 import frc.robot.Constants;
 
-public class TalonFXModule extends BaseModule{
+public class TalonFXModule{
     private final TalonFX driveMotor;
     private final TalonFX turnMotor;
 
@@ -58,10 +58,20 @@ public class TalonFXModule extends BaseModule{
     private final BaseStatusSignal driveVelocitySignal;
     private final BaseStatusSignal rotationSignal;
 
+    /*
+     * The module index
+     * This follows the quadrants in a cartesian coordinate grid
+     * 
+     * front right - 0
+     * front left - 1
+     * back left - 2
+     * back right - 3
+     */
+    public int index;
+
 
     public TalonFXModule(int driveMotorId, int turnMotorId, double absoluteEncoderOffset, int TurnCANCoderId, int moduleIndex){
-        super(moduleIndex);
-
+        this.index = moduleIndex;
         driveMotor = new TalonFX(driveMotorId, "drivetrain");
         turnMotor = new TalonFX(turnMotorId, "drivetrain");
         absoluteEncoder = new CANcoder(TurnCANCoderId, "drivetrain");
@@ -177,6 +187,10 @@ public class TalonFXModule extends BaseModule{
         SmartDashboard.putNumber("Swerve/Module " + (this.index + 1) + "/Voltage Draw", driveMotor.getMotorVoltage().getValueAsDouble());
     }
 
+    public void setTurnMotor(double v){
+        turnMotor.set(v);
+    }
+
     public double start_rotation_sample(){
         rot_sample = getRawDrivePosition();
         return rot_sample;
@@ -194,8 +208,12 @@ public class TalonFXModule extends BaseModule{
         return drivePositionSignal.getValueAsDouble();
     }
 
-    protected double getRawDriveAcceleration(){
-        return driveMotor.getAcceleration().getValueAsDouble();
+    public double getDriveAcceleration(){
+        return driveMotor.getAcceleration().getValueAsDouble() / Constants.Swerve.DRIVING_GEAR_RATIO * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS;
+    }
+
+    public double getTurnVelocity(){
+        return turnMotor.getVelocity().getValueAsDouble() / Constants.Swerve.TURNING_GEAR_RATIO * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS;
     }
 
     protected double getCANCoderRadians(){
@@ -252,7 +270,6 @@ public class TalonFXModule extends BaseModule{
         */
     }
 
-    @Override
     public SwerveModulePosition getPosition(){
         latestPosition.distanceMeters = getRawDrivePosition() / Constants.Swerve.DRIVING_GEAR_RATIO * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS;
 
@@ -266,7 +283,6 @@ public class TalonFXModule extends BaseModule{
         return latestPosition;
     }
 
-    @Override
     public SwerveModuleState getState(){
         Rotation2d angle;
         odometryLock.readLock().lock();
@@ -275,7 +291,7 @@ public class TalonFXModule extends BaseModule{
         }finally{
             odometryLock.readLock().unlock();
         }
-        return new SwerveModuleState(getDriveVelocity(), angle);
+        return new SwerveModuleState(getRawDriveVelocity() / Constants.Swerve.DRIVING_GEAR_RATIO * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS, angle);
     }
 
 }

@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj2.command.SelectCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.BisonLib.BaseProject.Controller.EnhancedCommandController;
-import frc.BisonLib.BaseProject.Swerve.Modules.BaseModule;
 import frc.BisonLib.BaseProject.Swerve.Modules.TalonFXModule;
 import frc.BisonLib.BaseProject.Vision.AprilTagCamera;
 import frc.BisonLib.BaseProject.Vision.Limelight.LLAprilTagCamera;
@@ -59,7 +58,7 @@ public class RobotContainer {
   private final LLIntakeCamera intakeCamera = new LLIntakeCamera("limelight-intake");
   
   // Creates an array of all the swerve modules, pass this into Swerve
-  private final BaseModule[] modules = new BaseModule[] 
+  private final TalonFXModule[] modules = new TalonFXModule[] 
           {
             new TalonFXModule(Constants.Swerve.FRONT_RIGHT_DRIVE_ID, Constants.Swerve.FRONT_RIGHT_TURN_ID, Constants.Swerve.FRONT_RIGHT_ABS_ENCODER_OFFSET_ROTATIONS, Constants.Swerve.FRONT_RIGHT_CANCODER_ID, 0),
             new TalonFXModule(Constants.Swerve.FRONT_LEFT_DRIVE_ID, Constants.Swerve.FRONT_LEFT_TURN_ID, Constants.Swerve.FRONT_LEFT_ABS_ENCODER_OFFSET_ROTATIONS, Constants.Swerve.FRONT_LEFT_CANCODER_ID, 1),

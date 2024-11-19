@@ -10,7 +10,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.BisonLib.BaseProject.Swerve.SwerveBase;
-import frc.BisonLib.BaseProject.Swerve.Modules.BaseModule;
+import frc.BisonLib.BaseProject.Swerve.Modules.TalonFXModule;
 import frc.robot.RobotContainer;
 
 public class Swerve extends SwerveBase{
@@ -20,7 +20,7 @@ public class Swerve extends SwerveBase{
     public boolean hasSeenNote;
     public Pose2d notePose;
 
-    public Swerve(VisionManager visionManager, BaseModule[] modules) {
+    public Swerve(VisionManager visionManager, TalonFXModule[] modules) {
         super(visionManager, modules);
 
         hasSeenNote = false;
