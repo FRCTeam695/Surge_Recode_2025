@@ -48,7 +48,7 @@ public class SwerveBase extends SubsystemBase {
     private final SwerveDrivePoseEstimator odometry;
 
     // NEVER DIRECTLY CALL ANY GYRO METHODS, ALWAYS USE THE SYNCHRONIZED GYRO LOCK!!
-    private final AHRS gyro = new AHRS(AHRS.NavXComType.kMXP_SPI, Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ);
+    private final AHRS gyro = new AHRS(AHRS.NavXComType.kMXP_SPI, Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ_INTEGER);
 
 
     // private final BuiltInAccelerometer rioAccelerometer = new BuiltInAccelerometer();
@@ -95,9 +95,9 @@ public class SwerveBase extends SubsystemBase {
         allOdomSignals = new BaseStatusSignal[(4 * 3)];
         for(int i = 0; i < modules.length; ++i){
             var signals = modules[0].getOdometrySignals();
-            allOdomSignals[i*3 + 0] = signals[0];
-            allOdomSignals[i*3 + 1] = signals[1];
-            allOdomSignals[i*3 + 2] = signals[2];
+            allOdomSignals[i*3 + 0] = signals[0]; // drive position
+            allOdomSignals[i*3 + 1] = signals[1]; // drive velocity
+            allOdomSignals[i*3 + 2] = signals[2]; // module rotation (cancoder)
         }
 
 
@@ -262,7 +262,7 @@ public class SwerveBase extends SubsystemBase {
      * @return The new rotation component as calculated by the rotation override
      */
     public double getAngularComponentFromRotationOverride(double wantedAngle){
-        double currentRotation = currentRobotPose.getRotation().getDegrees();
+        double currentRotation = getSavedPose().getRotation().getDegrees();
         double pidOutput = thetaController.calculate(currentRotation, wantedAngle);
 
         //SmartDasboard.putNumber("Swerve/Current Robot Rotation", currentRotation);
@@ -302,7 +302,7 @@ public class SwerveBase extends SubsystemBase {
      * @return The distance from the robot pose to the other supplied translation
      */
     public double getDistanceToTranslation(Translation2d other){
-        return currentRobotPose.getTranslation().getDistance(other);
+        return getSavedPose().getTranslation().getDistance(other);
     }
 
 
@@ -585,7 +585,7 @@ public class SwerveBase extends SubsystemBase {
             return;
         }
 
-        driveFromSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(speedsSupplier.get(), currentRobotPose.getRotation()));
+        driveFromSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(speedsSupplier.get(), getSavedPose().getRotation()));
     }
     
     /**
@@ -598,7 +598,7 @@ public class SwerveBase extends SubsystemBase {
     public void drive(ChassisSpeeds speeds, boolean fieldOriented){
 
         if (fieldOriented) {
-            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, currentRobotPose.getRotation());
+            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getSavedPose().getRotation());
         }
 
         this.driveFromSpeeds(speeds);
@@ -644,8 +644,9 @@ public class SwerveBase extends SubsystemBase {
         currentTime = Timer.getFPGATimestamp();
         inc++;
         totalLoopTime += (currentTime-lastTime);
+        //SmartDashboard.putNumber("avg loop time", totalLoopTime/inc);
 
-        BaseStatusSignal.waitForAll(1.0 / Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ, allOdomSignals);
+        BaseStatusSignal.waitForAll(1.0 / Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ_INTEGER, allOdomSignals);
         odometryLock.writeLock().lock();
         try{
             currentModulePositions = getModulePositions();
@@ -704,8 +705,8 @@ public class SwerveBase extends SubsystemBase {
         //updateOdometryWithVision();
 
 
-        SmartDashboard.putNumber("Actual Gyro Update Rate", gyro.getActualUpdateRate());
-        m_field.setRobotPose(currentRobotPose);
+       // SmartDashboard.putNumber("Actual Gyro Update Rate", gyro.getActualUpdateRate());
+        m_field.setRobotPose(getSavedPose());
          
 
         // SwerveModuleState[] modStates = getModuleStates();
@@ -716,15 +717,15 @@ public class SwerveBase extends SubsystemBase {
         // //SmartDashboard.putNumber("Swerve/Module 3/Module 3 Angle rad", modStates[2].angle.getRadians());
         // //SmartDashboard.putNumber("Swerve/Module 4/Module 4 Angle rad", modStates[3].angle.getRadians());
 
-        // //SmartDashboard.putNumber("Swerve/Module 1/Module 1 Velocity", modStates[0].speedMetersPerSecond);
-        // //SmartDashboard.putNumber("Swerve/Module 2/Module 2 Velocity", modStates[1].speedMetersPerSecond);
-        // //SmartDashboard.putNumber("Swerve/Module 3/Module 3 Velocity", modStates[2].speedMetersPerSecond);
-        // //SmartDashboard.putNumber("Swerve/Module 4/Module 4 Velocity", modStates[3].speedMetersPerSecond);
+        // SmartDashboard.putNumber("Swerve/Module 1/Module 1 Velocity", modStates[0].speedMetersPerSecond);
+        // SmartDashboard.putNumber("Swerve/Module 2/Module 2 Velocity", modStates[1].speedMetersPerSecond);
+        // SmartDashboard.putNumber("Swerve/Module 3/Module 3 Velocity", modStates[2].speedMetersPerSecond);
+        // SmartDashboard.putNumber("Swerve/Module 4/Module 4 Velocity", modStates[3].speedMetersPerSecond);
 
-        // //SmartDashboard.putNumber("Swerve/Module 1/Module 1 Accel", modAccelerations[0]);
-        // //SmartDashboard.putNumber("Swerve/Module 2/Module 2 Accel", modAccelerations[1]);
-        // //SmartDashboard.putNumber("Swerve/Module 3/Module 3 Accel", modAccelerations[2]);
-        // //SmartDashboard.putNumber("Swerve/Module 4/Module 4 Accel", modAccelerations[3]);
+        // SmartDashboard.putNumber("Swerve/Module 1/Module 1 Accel", modAccelerations[0]);
+        // SmartDashboard.putNumber("Swerve/Module 2/Module 2 Accel", modAccelerations[1]);
+        // SmartDashboard.putNumber("Swerve/Module 3/Module 3 Accel", modAccelerations[2]);
+        // SmartDashboard.putNumber("Swerve/Module 4/Module 4 Accel", modAccelerations[3]);
 
         // //SmartDashboard.putNumber("Swerve/current robot velocity", speed);
         // // //SmartDashboard.putNumber("Swerve/max rio measured acceleration", max_accel);

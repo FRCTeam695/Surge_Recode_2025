@@ -46,13 +46,13 @@ public class Constants {
 
         public static final SwerveConfig surgeConfig = new SwerveConfig(-0.007080 + 0.5, -0.009277 + 0.5, -0.484375, -0.441895, 
                                                 6.12, Units.metersToFeet(5.3), 3.8 * Math.PI,40, 
-                                    5, 22.5, 22.5, Math.PI, 12.8, 
+                                    5, 22.5, 22.5, 12.8, 
                                     false, 0.006, 6, 0, 110, 40, 0, 0);
         
         public static final SwerveConfig goldmoduleConfig = 
                 new SwerveConfig(0.317, 0.459+0.5, -0.112+0.5, 0.163,
                                     //new SwerveConfig(0.317, 0, 0, 0,
-                        5.7, 15.82, 4 * Math.PI, 0.015, 1, 22.25, 24.75, Math.PI, 150.0 / 7, true, 0.006, 1, 0, 90, 40, 0, 0);
+                        5.7, 15.82, 4 * Math.PI, 0.015, 1, 22.25, 24.75, 150.0 / 7, true, 0.006, 1, 0, 90, 40, 0, 0);
         // public static final Map<String, double[]> ROBOT_MAP = new HashMap<String, double[]>() {
         //     {
         //         put("GOLDMODULE", GOLDMODULE_CONSTANTS);
@@ -88,7 +88,7 @@ public class Constants {
 
         public static final double MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED = CHOSEN_CONSTANTS.maxAngularAccelerationRadPerSecondSquared;
         public static final double DISCRETIZE_TIMESTAMP = 0.02;
-        public static final int ODOMETRY_UPDATE_RATE_HZ = 125;
+        public static final int ODOMETRY_UPDATE_RATE_HZ_INTEGER = 125;
         public static final boolean MODULE_IS_INVERTED = CHOSEN_CONSTANTS.driveMotorInverted;
         public static final double MAX_ACCELERATION_METERS_PER_SECOND_SQ = CHOSEN_CONSTANTS.maxAccelMetersPerSec;
         public static final double SUPPLY_CURRENT_LIMIT = CHOSEN_CONSTANTS.supplyCurrentLimit;

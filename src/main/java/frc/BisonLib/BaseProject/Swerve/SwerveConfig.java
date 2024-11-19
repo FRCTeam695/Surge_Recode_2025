@@ -61,7 +61,7 @@ public class SwerveConfig {
          */
         public SwerveConfig(double frontRightOffset, double frontLeftOffset, double backLeftOffset, double backRightOffset, 
                             double drivingGearRatio, double maxSpeedFeetPerSec, double wheelCircumferenceInches, double wheelKP,
-                            double profiledKPvalPathplanner, double wheelbaseInches, double trackwidthInches, double maxAngularAccelerationRadPerSecondSquared,
+                            double profiledKPvalPathplanner, double wheelbaseInches, double trackwidthInches,
                             double turningGearRatio, boolean driveMotorInverted, double rotationToAngleKPval, double pathplannerTranslationKP,
                             double maxAccelFeetPerSec, double statorCurrentLimit, double supplyCurrentLimit, double wheelKD, double wheelKS){
             
