@@ -19,6 +19,7 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 
 import frc.robot.Constants;
@@ -50,7 +51,13 @@ public class TalonFXModule extends BaseModule{
     public final String kModuleType = "TalonFXModule";
 
     private double rot_sample;
+    private final BaseStatusSignal[] odomSignals = new BaseStatusSignal[4];
     private final ReentrantReadWriteLock odometryLock = new ReentrantReadWriteLock();
+
+    private final BaseStatusSignal drivePositionSignal;
+    private final BaseStatusSignal driveVelocitySignal;
+    private final BaseStatusSignal rotationSignal;
+
 
     public TalonFXModule(int driveMotorId, int turnMotorId, double absoluteEncoderOffset, int TurnCANCoderId, int moduleIndex){
         super(moduleIndex);
@@ -72,9 +79,21 @@ public class TalonFXModule extends BaseModule{
         // driveController = new PIDController(0.1, 0, 0);
         rot_sample = 0;
 
-        driveMotor.getPosition().setUpdateFrequency(Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ);
-        driveMotor.getVelocity().setUpdateFrequency(Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ);
-        absoluteEncoder.getAbsolutePosition().setUpdateFrequency(Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ);
+        
+        drivePositionSignal = driveMotor.getPosition();
+        driveVelocitySignal = driveMotor.getVelocity();
+        rotationSignal = absoluteEncoder.getAbsolutePosition();
+
+        odomSignals[0] = drivePositionSignal;
+        odomSignals[1] = driveVelocitySignal;
+        odomSignals[2] = rotationSignal;
+
+        BaseStatusSignal.setUpdateFrequencyForAll(Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ, odomSignals);
+    }
+
+
+    public BaseStatusSignal[] getOdometrySignals(){
+        return odomSignals;
     }
 
     
@@ -168,11 +187,11 @@ public class TalonFXModule extends BaseModule{
     }
 
     protected double getRawDriveVelocity(){
-        return driveMotor.getVelocity().getValueAsDouble();
+        return driveVelocitySignal.getValueAsDouble();
     }
 
     protected double getRawDrivePosition(){
-        return driveMotor.getPosition().getValueAsDouble();
+        return drivePositionSignal.getValueAsDouble();
     }
 
     protected double getRawDriveAcceleration(){
@@ -180,7 +199,7 @@ public class TalonFXModule extends BaseModule{
     }
 
     protected double getCANCoderRadians(){
-        double angleRad = absoluteEncoder.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI;
+        double angleRad = rotationSignal.getValueAsDouble() * 2 * Math.PI;
         // SmartDashboard.putNumber("Module " + (this.index + 1) +  " Angle Radians", angleRad);
         // SmartDashboard.putNumber("Module " + (this.index + 1) +  " Angle Degrees", Math.toDegrees(angleRad));
         return angleRad;
@@ -217,8 +236,6 @@ public class TalonFXModule extends BaseModule{
         if (Math.abs(delta.getDegrees()) > 90.0) {
           desiredState = new SwerveModuleState(
               -desiredState.speedMetersPerSecond, desiredState.angle.rotateBy(Rotation2d.kPi));
-        } else {
-          desiredState = new SwerveModuleState(desiredState.speedMetersPerSecond, desiredState.angle);
         }
         
         driveMotor.set(Math.cos(Math.abs(desiredState.angle.getRadians() -  latestAngle.getRadians())) * desiredState.speedMetersPerSecond/Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS);

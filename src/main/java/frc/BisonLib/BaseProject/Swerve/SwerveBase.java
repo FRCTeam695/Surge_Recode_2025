@@ -14,6 +14,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.Orchestra;
 import com.studica.frc.AHRS;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -54,11 +55,17 @@ public class SwerveBase extends SubsystemBase {
     // private final LinearFilter xAccelFilter = LinearFilter.movingAverage(5);
     // private final LinearFilter yAccelFilter = LinearFilter.movingAverage(5);
     private final PIDController thetaController = new PIDController(Constants.Swerve.ROBOT_ROTATION_KP, 0, 0);
+    private final BaseStatusSignal[] allOdomSignals;
 
     protected double max_accel = 0;
     protected double speed = 0;
     protected double initialGyroAngle = 0;
     protected boolean rotatedToSetpoint = false;
+
+    protected double lastTime = Timer.getFPGATimestamp();
+    protected double currentTime = 0;
+    protected double totalLoopTime = 0;
+    protected double inc = 0;
 
     public final Trigger atRotationSetpoint = new Trigger(()-> robotRotationAtSetpoint());
     public PPHolonomicDriveController pathplannerController =  new PPHolonomicDriveController( // HolonomicPathFollowerConfig, this should likely live in your Constants class
@@ -76,6 +83,7 @@ public class SwerveBase extends SubsystemBase {
 
     private Pose2d currentRobotPose = new Pose2d();
     private SwerveModulePosition[] currentModulePositions = new SwerveModulePosition[4];
+    private SwerveModuleState[] currentModuleStates = new SwerveModuleState[4];
 
     /**
      * Does all da constructing
@@ -84,6 +92,14 @@ public class SwerveBase extends SubsystemBase {
      * @param moduleTypes The type of swerve module on the swerve drive
      */
     public SwerveBase(VisionManagerBase visionManager, BaseModule[] modules) {
+        allOdomSignals = new BaseStatusSignal[(4 * 3)];
+        for(int i = 0; i < modules.length; ++i){
+            var signals = modules[0].getOdometrySignals();
+            allOdomSignals[i*3 + 0] = signals[0];
+            allOdomSignals[i*3 + 1] = signals[1];
+            allOdomSignals[i*3 + 2] = signals[2];
+        }
+
 
         this.visionManager = visionManager;
 
@@ -111,15 +127,15 @@ public class SwerveBase extends SubsystemBase {
         thetaController.enableContinuousInput(-180, 180);
 
 
-        Rotation2d gyroHeading = getGyroHeading();
-        SwerveModulePosition[] modulePositions = getModulePositions();
         odometryLock.writeLock().lock();
+        Rotation2d gyroHeading = getGyroHeading();
+        currentModulePositions = getModulePositions();
         try{
             odometry = new SwerveDrivePoseEstimator
             (
                 Constants.Swerve.kDriveKinematics, 
                 gyroHeading,
-                modulePositions,
+                currentModulePositions,
                 new Pose2d()
             );
         }finally{
@@ -295,7 +311,14 @@ public class SwerveBase extends SubsystemBase {
      * used with pathplanner
      */
     public ChassisSpeeds getLatestChassisSpeed(){
-        return Constants.Swerve.kDriveKinematics.toChassisSpeeds(getModuleStates());
+        ChassisSpeeds speeds;
+        odometryLock.readLock().lock();
+        try{
+            speeds = Constants.Swerve.kDriveKinematics.toChassisSpeeds(currentModuleStates);
+        }finally{
+            odometryLock.readLock().unlock();
+        }
+        return speeds;
     }
 
     public double getLatestSpeed(){
@@ -617,14 +640,20 @@ public class SwerveBase extends SubsystemBase {
 
 
     public void updateOdometryWithKinematics(){
-        currentModulePositions = getModulePositions();
-        Rotation2d gyroHeading = getGyroHeading();
+        lastTime = currentTime;
+        currentTime = Timer.getFPGATimestamp();
+        inc++;
+        totalLoopTime += (currentTime-lastTime);
+
+        BaseStatusSignal.waitForAll(1.0 / Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ, allOdomSignals);
         odometryLock.writeLock().lock();
         try{
+            currentModulePositions = getModulePositions();
             currentRobotPose = odometry.updateWithTime(
                 Timer.getFPGATimestamp(),
-                gyroHeading,
+                getGyroHeading(),
                 currentModulePositions);
+            currentModuleStates = getModuleStates();
         }finally{
             odometryLock.writeLock().unlock();
         }
@@ -675,7 +704,7 @@ public class SwerveBase extends SubsystemBase {
         //updateOdometryWithVision();
 
 
-        SmartDashboard.putNumber("Gyro Update Rate", gyro.getActualUpdateRate());
+        SmartDashboard.putNumber("Actual Gyro Update Rate", gyro.getActualUpdateRate());
         m_field.setRobotPose(currentRobotPose);
          
 

@@ -1,5 +1,6 @@
 package frc.BisonLib.BaseProject.Swerve.Modules;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -69,4 +70,5 @@ public abstract class  BaseModule {
 
     public abstract SwerveModuleState getState();
     public abstract SwerveModulePosition getPosition();
+    public abstract BaseStatusSignal[] getOdometrySignals();
 }
