@@ -21,6 +21,9 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.*;
 import com.pathplanner.lib.controllers.*;
 import com.pathplanner.lib.path.*;
+import com.pathplanner.lib.util.DriveFeedforwards;
+import com.pathplanner.lib.util.swerve.SwerveSetpoint;
+import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
@@ -34,6 +37,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -85,6 +89,9 @@ public class SwerveBase extends SubsystemBase {
     private SwerveModulePosition[] currentModulePositions = new SwerveModulePosition[4];
     private SwerveModuleState[] currentModuleStates = new SwerveModuleState[4];
 
+    private final SwerveSetpointGenerator setpointGenerator;
+    private SwerveSetpoint previousSetpoint;
+
     /**
      * Does all da constructing
      * 
@@ -106,7 +113,16 @@ public class SwerveBase extends SubsystemBase {
         // Holds all the modules
         this.modules = modules;
 
-        initAutoBuilder();
+        RobotConfig config;
+        try{
+            config = RobotConfig.fromGUISettings();
+        } catch (Exception e) {
+        // Handle exception as needed
+            e.printStackTrace();
+            config = new RobotConfig(74.088, 6.883, new ModuleConfig(0.048, 5.450, 1.1, DCMotor.getFalcon500(1), 60, 4), 0.546, 0.546);
+        }
+
+        initAutoBuilder(config);
 
 
         /*
@@ -142,6 +158,17 @@ public class SwerveBase extends SubsystemBase {
             odometryLock.writeLock().unlock();
         }
 
+
+        setpointGenerator = new SwerveSetpointGenerator(
+            config, // The robot configuration. This is the same config used for generating trajectories and running path following commands.
+            Units.rotationsToRadians(Constants.Swerve.MAX_WHEEL_ROTATIONAL_SPEED) // The max rotation velocity of a swerve module in radians per second. This should probably be stored in your Constants file
+        );
+
+        
+        ChassisSpeeds speeds = getLatestChassisSpeed();
+        SwerveModuleState[] states = getLatestModuleStates();
+        previousSetpoint = new SwerveSetpoint(speeds, states, DriveFeedforwards.zeros(config.numModules));
+
         SmartDashboard.putData("field", m_field);
     }
 
@@ -175,16 +202,7 @@ public class SwerveBase extends SubsystemBase {
      * Initializes autobuilder,
      * this is used by pathplanner
      */
-    public void initAutoBuilder(){
-
-        RobotConfig config;
-        try{
-        config = RobotConfig.fromGUISettings();
-        } catch (Exception e) {
-        // Handle exception as needed
-        e.printStackTrace();
-        config = new RobotConfig(74.088, 6.883, new ModuleConfig(0.048, 5.450, 1.1, DCMotor.getFalcon500(1), 60, 4), 0.546, 0.546);
-        }
+    public void initAutoBuilder(RobotConfig config){
 
         // Configure the AutoBuilder last
         AutoBuilder.configure(
@@ -320,6 +338,20 @@ public class SwerveBase extends SubsystemBase {
         }
         return speeds;
     }
+
+
+    public SwerveModuleState[] getLatestModuleStates(){
+        SwerveModuleState[] states;
+        odometryLock.readLock().lock();
+        try{
+            states = currentModuleStates;
+        }finally{
+            odometryLock.readLock().unlock();
+        }
+        return states;
+    }
+    
+    
 
     public double getLatestSpeed(){
         return speed;
@@ -532,6 +564,19 @@ public class SwerveBase extends SubsystemBase {
 
         // set the modules to their desired speeds
         setModules(moduleStates);
+
+        // previousSetpoint = setpointGenerator.generateSetpoint(
+        //     previousSetpoint, // The previous setpoint
+        //     chassisSpeeds, // The desired target speeds
+        //     0.02 // The loop time of the robot code, in seconds
+        // );
+
+        //SmartDashboard.putString("Swerve/Commanded Chassis Speeds", chassisSpeeds.toString());
+        // convert chassis speeds to module states
+        //SwerveModuleState[] moduleStates = Constants.Swerve.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
+
+        // set the modules to their desired speeds
+        //setModules(previousSetpoint.moduleStates());
     }
 
 

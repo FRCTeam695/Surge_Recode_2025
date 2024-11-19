@@ -38,6 +38,7 @@ public class SwerveConfig {
         public final Translation2d backLeftTranslation;
 
         public final boolean driveMotorInverted;
+        public final double maxWheelRotationalSpeed;
 
 
         /**
@@ -63,7 +64,7 @@ public class SwerveConfig {
                             double drivingGearRatio, double maxSpeedFeetPerSec, double wheelCircumferenceInches, double wheelKP,
                             double profiledKPvalPathplanner, double wheelbaseInches, double trackwidthInches,
                             double turningGearRatio, boolean driveMotorInverted, double rotationToAngleKPval, double pathplannerTranslationKP,
-                            double maxAccelFeetPerSec, double statorCurrentLimit, double supplyCurrentLimit, double wheelKD, double wheelKS){
+                            double maxAccelFeetPerSec, double statorCurrentLimit, double supplyCurrentLimit, double wheelKD, double wheelKS, double maxWheelRotationalSpeed){
             
             this.frontRightOffset = frontRightOffset;
             this.frontLeftOffset = frontLeftOffset;
@@ -87,6 +88,7 @@ public class SwerveConfig {
             // omega = v/r 
             // note: this doesn't work if the chassis isn't square
             this.maxAngularSpeedRadPerSec = this.maxSpeedMetersPerSec / this.frontRightTranslation.getNorm();
+            this.maxWheelRotationalSpeed = maxWheelRotationalSpeed;
 
             this.maxAngularAccelerationRadPerSecondSquared = this.maxAccelMetersPerSec / this.frontRightTranslation.getNorm();
             //this.maxAngularAccelerationRadPerSecondSquared = maxAngularAccelerationRadPerSecondSquared;

@@ -232,6 +232,7 @@ public class TalonFXModule extends BaseModule{
             odometryLock.readLock().unlock();
         }
         
+        // Module optimization (don't turn more than 90 degrees)
         var delta = desiredState.angle.minus(latestAngle);
         if (Math.abs(delta.getDegrees()) > 90.0) {
           desiredState = new SwerveModuleState(

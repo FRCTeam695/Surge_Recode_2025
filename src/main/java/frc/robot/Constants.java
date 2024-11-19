@@ -47,12 +47,12 @@ public class Constants {
         public static final SwerveConfig surgeConfig = new SwerveConfig(-0.007080 + 0.5, -0.009277 + 0.5, -0.484375, -0.441895, 
                                                 6.12, Units.metersToFeet(5.3), 3.8 * Math.PI,40, 
                                     5, 22.5, 22.5, 12.8, 
-                                    false, 0.006, 6, 0, 110, 40, 0, 0);
+                                    false, 0.006, 6, 0, 110, 40, 0, 0, 0);
         
         public static final SwerveConfig goldmoduleConfig = 
                 new SwerveConfig(0.317, 0.459+0.5, -0.112+0.5, 0.163,
                                     //new SwerveConfig(0.317, 0, 0, 0,
-                        5.7, 15.82, 4 * Math.PI, 0.015, 1, 22.25, 24.75, 150.0 / 7, true, 0.006, 1, 0, 90, 40, 0, 0);
+                        5.7, 15.82, 4 * Math.PI, 0.015, 1, 22.25, 24.75, 150.0 / 7, true, 0.006, 1, 0, 90, 40, 0, 0, 0);
         // public static final Map<String, double[]> ROBOT_MAP = new HashMap<String, double[]>() {
         //     {
         //         put("GOLDMODULE", GOLDMODULE_CONSTANTS);
@@ -85,6 +85,7 @@ public class Constants {
         public static final double ROBOT_ROTATION_KP = CHOSEN_CONSTANTS.rotationOverrideKP;
         public static final double PATHPLANNER_OMEGA_KP = CHOSEN_CONSTANTS.pathplannerOmegaKP;
         public static final double PATHPLANNER_TRANSLATION_KP = CHOSEN_CONSTANTS.pathplannerTranslationKP;
+        public static final double MAX_WHEEL_ROTATIONAL_SPEED = CHOSEN_CONSTANTS.maxWheelRotationalSpeed;
 
         public static final double MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED = CHOSEN_CONSTANTS.maxAngularAccelerationRadPerSecondSquared;
         public static final double DISCRETIZE_TIMESTAMP = 0.02;
