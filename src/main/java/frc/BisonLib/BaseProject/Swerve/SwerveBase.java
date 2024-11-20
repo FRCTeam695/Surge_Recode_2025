@@ -16,12 +16,12 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.Orchestra;
+import com.ctre.phoenix6.StatusCode;
 import com.studica.frc.AHRS;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.*;
 import com.pathplanner.lib.controllers.*;
 import com.pathplanner.lib.path.*;
-import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 
@@ -59,12 +59,16 @@ public class SwerveBase extends SubsystemBase {
     // private final LinearFilter xAccelFilter = LinearFilter.movingAverage(5);
     // private final LinearFilter yAccelFilter = LinearFilter.movingAverage(5);
     private final PIDController thetaController = new PIDController(Constants.Swerve.ROBOT_ROTATION_KP, 0, 0);
+    private final PIDController wheelCalController = new PIDController(0.016, 0.000, 0.01);
     private final BaseStatusSignal[] allOdomSignals;
 
     protected double max_accel = 0;
     protected double speed = 0;
-    protected double initialGyroAngle = 0;
     protected boolean rotatedToSetpoint = false;
+
+    // used for wheel characterization
+    protected double initialGyroAngle = 0;
+    protected SwerveModulePosition[] initialPositions = new SwerveModulePosition[4];
 
     protected double lastTime = Timer.getFPGATimestamp();
     protected double currentTime = 0;
@@ -99,9 +103,10 @@ public class SwerveBase extends SubsystemBase {
      * @param moduleTypes The type of swerve module on the swerve drive
      */
     public SwerveBase(VisionManagerBase visionManager, TalonFXModule[] modules) {
+        // 4 modules * 3 signals per module
         allOdomSignals = new BaseStatusSignal[(4 * 3)];
         for(int i = 0; i < modules.length; ++i){
-            var signals = modules[0].getOdometrySignals();
+            var signals = modules[i].getOdometrySignals();
             allOdomSignals[i*3 + 0] = signals[0]; // drive position
             allOdomSignals[i*3 + 1] = signals[1]; // drive velocity
             allOdomSignals[i*3 + 2] = signals[2]; // module rotation (cancoder)
@@ -165,9 +170,10 @@ public class SwerveBase extends SubsystemBase {
         );
 
         
-        ChassisSpeeds speeds = getLatestChassisSpeed();
-        SwerveModuleState[] states = getLatestModuleStates();
-        previousSetpoint = new SwerveSetpoint(speeds, states, DriveFeedforwards.zeros(config.numModules));
+        // ChassisSpeeds speeds = new ChassisSpeeds();
+        // SwerveModuleState[] states = getLatestModuleStates();
+        // previousSetpoint = new SwerveSetpoint(speeds, states, DriveFeedforwards.zeros(config.numModules));
+
 
         SmartDashboard.putData("field", m_field);
     }
@@ -435,18 +441,35 @@ public class SwerveBase extends SubsystemBase {
         return runOnce(
             ()-> 
                 {
-                    if(isRedAlliance()) setGyro(180); // if we are on red alliance
-                    else setGyro(0);
+                    if(isRedAlliance()){
+                        odometryLock.writeLock().lock();
+                        try{
+                            resetOdometry(new Pose2d(currentRobotPose.getX(), currentRobotPose.getY(), new Rotation2d(Math.PI)));
+                        }finally{
+                            odometryLock.writeLock().unlock();
+                        }
+                    }
+                    else {
+                        odometryLock.writeLock().lock();
+                        try{
+                            resetOdometry(new Pose2d(currentRobotPose.getX(), currentRobotPose.getY(), new Rotation2d(0)));
+                        }finally{
+                            odometryLock.writeLock().unlock();
+                        }
+                    }
                 }
         );
     }
 
     /*
      * Calculates the circumference of the wheel by turning in place slowly
+     * 
+     * COMMENT OUT DRIVEBASE AND ODOMETRY CODE BEFORE RUNNING THIS
      */
     public Command runWheelCharacterization(){
 
-        // distance each module will travel
+        // total distance each module should travel
+        // circumferenc = pi * d
         double distance_traveled = Constants.Swerve.WHEEL_BASE_METERS * Math.PI;
 
         return runOnce(()-> {
@@ -458,34 +481,39 @@ public class SwerveBase extends SubsystemBase {
 
         })
         .andThen(
-         waitSeconds(0.5)   
+         waitSeconds(0.5)
         )
         .andThen(runOnce(
           ()-> {
-            for(var mod : modules){
-                mod.start_rotation_sample();
-            }
-            initialGyroAngle = getSavedPose().getRotation().getDegrees() + 180;
-          }  
+            BaseStatusSignal.waitForAll(0.5, allOdomSignals);
+            initialPositions = getModulePositions();
+            initialGyroAngle = getGyroHeading().getDegrees() + 180;
+          }
         ))
         .andThen(
             run(()-> {
-
+                BaseStatusSignal.waitForAll(0.5, allOdomSignals);
                 // closed loop control to turn in place one rotation
-                double error = Math.abs(360 - Math.abs(getSavedPose().getRotation().getDegrees()+180 - initialGyroAngle));
+                double error = 360 - Math.abs(getGyroHeading().getDegrees() + 180 - initialGyroAngle);
+                SmartDashboard.putNumber("robot rotation error", error);
                 for(var mod : modules){
-                    mod.setDesiredState(new SwerveModuleState(error * 0.00277777777, Rotation2d.fromDegrees(45 + mod.index * 90)));
+                    mod.setDesiredState(new SwerveModuleState(MathUtil.clamp(wheelCalController.calculate(Math.abs(getGyroHeading().getDegrees() + 180 - initialGyroAngle), 360), -0.4, 0.4), Rotation2d.fromDegrees(45 + mod.index * 90)));
                 }
-            })
+            }).until(()-> (wheelCalController.getError()<0.05))
         )
         .andThen(
             runOnce(()-> {
+                BaseStatusSignal.waitForAll(0.5, allOdomSignals);
+                SwerveModulePosition[] currentPositions = getModulePositions();
                 double avg_calculated_wheel_circumference = 0;
                 for(var mod : modules){
-                    double wheel_rotations = mod.get_change_in_rotation()/Constants.Swerve.DRIVING_GEAR_RATIO;
-                    double new_circumference = distance_traveled/wheel_rotations;
+                    //original_circumference/new_circumference = calculated_distance/actual_distance
+                    // actual_distance * original_circumference = new_circumference * calculated_distance
+                    // new_circumference = actual_distance * original_circumference / (calculated_distance)
+                    double new_circumference = distance_traveled * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS / (initialPositions[mod.index].distanceMeters - currentPositions[mod.index].distanceMeters);
                     avg_calculated_wheel_circumference += new_circumference;
-
+                    SmartDashboard.putNumber("initial distance " + mod.index, initialPositions[mod.index].distanceMeters);
+                    SmartDashboard.putNumber("current distance " + mod.index, currentPositions[mod.index].distanceMeters);
                     SmartDashboard.putNumber("Swerve/Module " + mod.index + "/calculated wheel circumference", new_circumference);
                 }
                 avg_calculated_wheel_circumference /= 4;
@@ -691,15 +719,19 @@ public class SwerveBase extends SubsystemBase {
         // totalLoopTime += (currentTime-lastTime);
         //SmartDashboard.putNumber("avg loop time", totalLoopTime/inc);
 
-        BaseStatusSignal.waitForAll(1.0 / Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ_INTEGER, allOdomSignals);
+        StatusCode signal = BaseStatusSignal.waitForAll(1.5 / Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ_INTEGER, allOdomSignals);
+        if(signal.isError()) System.out.println(signal);
+
+        SwerveModulePosition[] positions = getModulePositions();
+        SwerveModuleState[] states = getModuleStates();
         odometryLock.writeLock().lock();
         try{
-            currentModulePositions = getModulePositions();
+            currentModulePositions = positions;
             currentRobotPose = odometry.updateWithTime(
                 Timer.getFPGATimestamp(),
                 getGyroHeading(),
                 currentModulePositions);
-            currentModuleStates = getModuleStates();
+            currentModuleStates = states;
         }finally{
             odometryLock.writeLock().unlock();
         }
@@ -739,7 +771,7 @@ public class SwerveBase extends SubsystemBase {
     @Override
     public void periodic() {
         //modules[0].setTurnMotor(1);
-        SmartDashboard.putNumber("turn motor speed", modules[0].getTurnVelocity());
+        //SmartDashboard.putNumber("turn motor speed", modules[0].getTurnVelocity());
 
         // ChassisSpeeds currentSpeeds = getLatestChassisSpeed();
         // speed = Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
@@ -753,7 +785,7 @@ public class SwerveBase extends SubsystemBase {
         //updateOdometryWithVision();
 
 
-       // SmartDashboard.putNumber("Actual Gyro Update Rate", gyro.getActualUpdateRate());
+       //SmartDashboard.putNumber("Actual Gyro Update Rate", gyro.getActualUpdateRate());
         m_field.setRobotPose(getSavedPose());
          
 

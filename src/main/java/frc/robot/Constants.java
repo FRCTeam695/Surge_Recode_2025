@@ -89,7 +89,7 @@ public class Constants {
 
         public static final double MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED = CHOSEN_CONSTANTS.maxAngularAccelerationRadPerSecondSquared;
         public static final double DISCRETIZE_TIMESTAMP = 0.02;
-        public static final int ODOMETRY_UPDATE_RATE_HZ_INTEGER = 125;
+        public static final int ODOMETRY_UPDATE_RATE_HZ_INTEGER = 200;
         public static final boolean MODULE_IS_INVERTED = CHOSEN_CONSTANTS.driveMotorInverted;
         public static final double MAX_ACCELERATION_METERS_PER_SECOND_SQ = CHOSEN_CONSTANTS.maxAccelMetersPerSec;
         public static final double SUPPLY_CURRENT_LIMIT = CHOSEN_CONSTANTS.supplyCurrentLimit;

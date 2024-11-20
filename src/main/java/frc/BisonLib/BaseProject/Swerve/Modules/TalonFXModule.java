@@ -98,7 +98,9 @@ public class TalonFXModule{
         odomSignals[1] = driveVelocitySignal;
         odomSignals[2] = rotationSignal;
 
-        BaseStatusSignal.setUpdateFrequencyForAll(Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ_INTEGER, odomSignals);
+        drivePositionSignal.setUpdateFrequency(Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ_INTEGER);
+        driveVelocitySignal.setUpdateFrequency(Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ_INTEGER);
+        rotationSignal.setUpdateFrequency(Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ_INTEGER);
     }
 
 

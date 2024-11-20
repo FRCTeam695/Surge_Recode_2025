@@ -210,21 +210,21 @@ public class Arm extends SubsystemBase {
   // }
   public void periodic(){
     double relPos = getPosition();
-    SmartDashboard.putNumber("Arm Setpoint Offset", setpoint_offset);
-    setpoint_offset = SmartDashboard.getNumber("Arm Setpoint Offset", 0);
+    //SmartDashboard.putNumber("Arm Setpoint Offset", setpoint_offset);
+    //setpoint_offset = SmartDashboard.getNumber("Arm Setpoint Offset", 0);
 
     double latest_abs_pos = getAbsolutePosition();
     latest_abs_moving_avg = absolute_moving_avg.calculate(latest_abs_pos);
 
     //SmartDashboard.putNumber("Arm Velocity", getArmSpeed());
-    SmartDashboard.putNumber("Relative Encoder Offset", relative_enc_offset);
-    SmartDashboard.putNumber("ARM ENCODER POSITION", Math.toDegrees(relPos));
-    SmartDashboard.putNumber("Latest Arm Absolute Position", latest_abs_pos);
-    SmartDashboard.putNumber("Arm Absolute Position Moving Average", latest_abs_moving_avg);
-    SmartDashboard.putBoolean("Arm at Setpoint", atPositionSetpoint.getAsBoolean());
+    // SmartDashboard.putNumber("Relative Encoder Offset", relative_enc_offset);
+    // SmartDashboard.putNumber("ARM ENCODER POSITION", Math.toDegrees(relPos));
+    // SmartDashboard.putNumber("Latest Arm Absolute Position", latest_abs_pos);
+    // SmartDashboard.putNumber("Arm Absolute Position Moving Average", latest_abs_moving_avg);
+    // SmartDashboard.putBoolean("Arm at Setpoint", atPositionSetpoint.getAsBoolean());
 
-    SmartDashboard.putNumber("Arm Goal", Math.toDegrees(goal));
-    SmartDashboard.putBoolean("AT GOAL", atGoal());
+    // SmartDashboard.putNumber("Arm Goal", Math.toDegrees(goal));
+    // SmartDashboard.putBoolean("AT GOAL", atGoal());
     // SmartDashboard.putNumber("ARM ENCODER RAW", m_encoder.getAbsolutePosition());
 
     if(goal == 0){

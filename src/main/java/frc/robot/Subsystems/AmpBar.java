@@ -66,7 +66,7 @@ public class AmpBar extends SubsystemBase {
 
   @Override
   public void periodic() {
-    SmartDashboard.putNumber("amp bar encoder", encoder.getPosition());
+    //SmartDashboard.putNumber("amp bar encoder", encoder.getPosition());
   }
 }
 

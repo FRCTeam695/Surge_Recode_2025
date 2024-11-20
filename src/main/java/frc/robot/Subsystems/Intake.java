@@ -102,6 +102,6 @@ public class Intake extends SubsystemBase{
 
     @Override
     public void periodic(){
-        SmartDashboard.putBoolean("Beambreak", getBeamBreak());
+        //SmartDashboard.putBoolean("Beambreak", getBeamBreak());
     }
 }

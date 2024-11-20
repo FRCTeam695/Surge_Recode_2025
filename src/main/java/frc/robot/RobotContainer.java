@@ -219,6 +219,7 @@ public class RobotContainer {
     //       Swerve.teleopDriveToNote(()-> Vision.getYawToNote(), ()-> Driver.getRequestedChassisSpeeds())
     //     ).until(()-> Operator.getHID().getRightBumper())
     // );
+    //Driver.a().onTrue(Swerve.runWheelCharacterization());
   }
 
   public void configureDefaultCommands(){
@@ -251,7 +252,7 @@ public class RobotContainer {
   // The command specified in here is run in autonomous
   public Command getAutonomousCommand() {
     //return new WaitCommand(5);
-    return new PathPlannerAuto("myauto");
+    return new PathPlannerAuto("TestingAuto").andThen(()-> Swerve.stopModules());
     //return autoChooser.getSelected().andThen(()-> Swerve.stopModules());
   }
 
