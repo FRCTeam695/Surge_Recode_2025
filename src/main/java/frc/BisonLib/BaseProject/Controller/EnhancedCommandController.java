@@ -56,10 +56,6 @@ public class EnhancedCommandController extends CommandXboxController{
         Yj *= Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS;
         Zj *= Constants.Swerve.MAX_ANGULAR_SPEED_RAD_PER_SECOND;
 
-        SmartDashboard.putNumber("Zj", Zj);
-        SmartDashboard.putNumber("Xj", Xj);
-        SmartDashboard.putNumber("Yj", Yj);
-
         return new ChassisSpeeds(Xj, Yj, Zj);
     }
 

@@ -22,6 +22,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.*;
 import com.pathplanner.lib.controllers.*;
 import com.pathplanner.lib.path.*;
+import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 
@@ -170,9 +171,9 @@ public class SwerveBase extends SubsystemBase {
         );
 
         
-        // ChassisSpeeds speeds = new ChassisSpeeds();
-        // SwerveModuleState[] states = getLatestModuleStates();
-        // previousSetpoint = new SwerveSetpoint(speeds, states, DriveFeedforwards.zeros(config.numModules));
+        ChassisSpeeds speeds = new ChassisSpeeds();
+        SwerveModuleState[] states = new SwerveModuleState[] {new SwerveModuleState(), new SwerveModuleState(), new SwerveModuleState(), new SwerveModuleState()};
+        previousSetpoint = new SwerveSetpoint(speeds, states, DriveFeedforwards.zeros(config.numModules));
 
 
         SmartDashboard.putData("field", m_field);
@@ -215,7 +216,7 @@ public class SwerveBase extends SubsystemBase {
                 this::getSavedPose, // Robot pose supplier
                 this::resetOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
                 this::getLatestChassisSpeed, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-                (speeds, feedforwards) -> driveFromSpeeds(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+                (speeds, feedforwards) -> driveFromSpeeds(speeds, false), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
                 pathplannerController,
                 config,
                 this::isRedAlliance,
@@ -582,29 +583,28 @@ public class SwerveBase extends SubsystemBase {
      * 
      * @param chassisSpeeds The chassis speeds the robot should travel at
      */
-    public void driveFromSpeeds(ChassisSpeeds chassisSpeeds) { 
-        // discretizes the chassis speeds (acccounts for robot skew)
-        chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, Constants.Swerve.DISCRETIZE_TIMESTAMP);
+    public void driveFromSpeeds(ChassisSpeeds chassisSpeeds, boolean useSetpointGenerator) {
+        if(!useSetpointGenerator){
+            // discretizes the chassis speeds (acccounts for robot skew)
+            chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, Constants.Swerve.ROBOT_LOOP_TIME);
 
-        //SmartDashboard.putString("Swerve/Commanded Chassis Speeds", chassisSpeeds.toString());
-        // convert chassis speeds to module states
-        SwerveModuleState[] moduleStates = Constants.Swerve.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
+            //SmartDashboard.putString("Swerve/Commanded Chassis Speeds", chassisSpeeds.toString());
+            // convert chassis speeds to module states
+            SwerveModuleState[] moduleStates = Constants.Swerve.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
 
-        // set the modules to their desired speeds
-        setModules(moduleStates);
+            // set the modules to their desired speeds
+            setModules(moduleStates);
+        }
+        else{
+            previousSetpoint = setpointGenerator.generateSetpoint(
+                previousSetpoint, // The previous setpoint
+                chassisSpeeds, // The desired target speeds
+                Constants.Swerve.ROBOT_LOOP_TIME // The loop time of the robot code, in seconds
+            );
 
-        // previousSetpoint = setpointGenerator.generateSetpoint(
-        //     previousSetpoint, // The previous setpoint
-        //     chassisSpeeds, // The desired target speeds
-        //     0.02 // The loop time of the robot code, in seconds
-        // );
-
-        //SmartDashboard.putString("Swerve/Commanded Chassis Speeds", chassisSpeeds.toString());
-        // convert chassis speeds to module states
-        //SwerveModuleState[] moduleStates = Constants.Swerve.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
-
-        // set the modules to their desired speeds
-        //setModules(previousSetpoint.moduleStates());
+            //set the modules to their desired speeds
+            setModules(previousSetpoint.moduleStates());
+        }
     }
 
 
@@ -617,7 +617,7 @@ public class SwerveBase extends SubsystemBase {
     public void driveSwerveFromChassisSpeedsCustomCenterOfRotation(ChassisSpeeds chassisSpeeds){
 
         // discretizes the chassis speeds (acccounts for robot skew)
-        chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, Constants.Swerve.DISCRETIZE_TIMESTAMP);
+        chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, Constants.Swerve.ROBOT_LOOP_TIME);
         //SmartDasboard.putNumber("Swerve/chassis x", chassisSpeeds.vxMetersPerSecond);
         //SmartDasboard.putNumber("Swerve/chassis y", chassisSpeeds.vyMetersPerSecond);
         //SmartDasboard.putNumber("Swerve/chassis omega", chassisSpeeds.omegaRadiansPerSecond);
@@ -658,7 +658,7 @@ public class SwerveBase extends SubsystemBase {
             return;
         }
 
-        driveFromSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(speedsSupplier.get(), getSavedPose().getRotation()));
+        driveFromSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(speedsSupplier.get(), getSavedPose().getRotation()), false);
     }
     
     /**
@@ -674,7 +674,7 @@ public class SwerveBase extends SubsystemBase {
             speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getSavedPose().getRotation());
         }
 
-        this.driveFromSpeeds(speeds);
+        this.driveFromSpeeds(speeds, false);
     }
 
 
