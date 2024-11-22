@@ -20,6 +20,9 @@ public class Robot extends TimedRobot {
     // Update odometry on a different thread for faster loop period.
     // https://www.desmos.com/calculator/vdgebi9s4t
     addPeriodic(m_robotContainer.Swerve::updateOdometryWithKinematics, 1.0/Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ_INTEGER);
+
+    RobotContainer.Arm.setRelEnc();
+    RobotContainer.Arm.resetStateToPresent();
   }
 
   @Override
@@ -43,6 +46,9 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
+
+    RobotContainer.Arm.setRelEnc();
+    RobotContainer.Arm.resetStateToPresent();
   }
 
   @Override
@@ -56,6 +62,9 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+
+    RobotContainer.Arm.setRelEnc();
+    RobotContainer.Arm.resetStateToPresent();
   }
 
   @Override
