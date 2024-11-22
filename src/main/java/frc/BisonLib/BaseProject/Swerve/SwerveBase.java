@@ -719,7 +719,7 @@ public class SwerveBase extends SubsystemBase {
         // totalLoopTime += (currentTime-lastTime);
         //SmartDashboard.putNumber("avg loop time", totalLoopTime/inc);
 
-        StatusCode signal = BaseStatusSignal.waitForAll(1.5 / Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ_INTEGER, allOdomSignals);
+        StatusCode signal = BaseStatusSignal.waitForAll(2 / Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ_INTEGER, allOdomSignals);
         if(signal.isError()) System.out.println(signal);
 
         SwerveModulePosition[] positions = getModulePositions();

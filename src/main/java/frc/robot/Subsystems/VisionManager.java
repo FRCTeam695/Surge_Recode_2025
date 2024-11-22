@@ -2,6 +2,9 @@ package frc.robot.Subsystems;
 
 import java.util.Optional;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -18,7 +21,10 @@ public class VisionManager extends VisionManagerBase{
     public Optional<Double> yawToSpeaker;
     public Optional<Double> pitchToSpeaker;
     public double latency;
-    public static Optional<Double> yawToNote;
+
+    public static Optional<Double> yawToNote;//CCW negative, CW positive, given by Limelight
+    public static Optional<Double> pitchToNote;
+    public static Optional<Translation2d> robotToNote;
     
     public double armPitch;
     public double shooterRPM;
@@ -160,8 +166,25 @@ public class VisionManager extends VisionManagerBase{
         return yawToNote;
     }
 
-    public double getPitchToNote(){
-        return intakeCamera.getPitchToTarget();
+    public Optional<Double> getPitchToNote(){
+        return pitchToNote;
+    }
+
+    public static Translation2d getRobotTranslationToNote(){//robot to note (positive is forward, right)
+        Translation2d noteTranslation;
+
+        //distance from target
+        //https://www.chiefdelphi.com/t/calculating-distance-to-vision-target/387183/5 
+        
+        double distance = (Constants.Vision.NOTE_HEIGHT - Constants.Vision.CAMERA_HEIGHT) / 
+                    Math.tan(Math.toRadians(Constants.Vision.MOUNT_PITCH + pitchToNote.get())) / 
+                    Math.cos(Math.toRadians(Constants.Vision.MOUNT_YAW + yawToNote.get()));
+        
+        //angle  
+        Rotation2d angle = new Rotation2d(Math.toRadians(90+ (-yawToNote.get())) );//flip the yaw in order to have ccw as positive
+
+        noteTranslation = new Translation2d(distance, angle);
+        return noteTranslation;
     }
 
     
@@ -206,9 +229,16 @@ public class VisionManager extends VisionManagerBase{
         if(canSeeNote){
             yawToNote = Optional.of(intakeCamera.getYawToTarget());
             SmartDashboard.putNumber("yaw to note", yawToNote.get());
+            pitchToNote = Optional.of(intakeCamera.getPitchToTarget());
+            SmartDashboard.putNumber("Pitch to note", pitchToNote.get());
+            robotToNote = Optional.of(getRobotTranslationToNote());
+            SmartDashboard.putNumber("Robot To Note FWD", robotToNote.get().getY()*39.37);
+            SmartDashboard.putNumber("Robot To Note STR", robotToNote.get().getX()*39.37);
         }
        else{
             yawToNote = Optional.empty();
+            pitchToNote = Optional.empty();
+            robotToNote = Optional.empty();
         }
         SmartDashboard.putBoolean("can see note", canSeeNote);
         SmartDashboard.putBoolean("Can see tag", canSeeTag);//cameras[0].canSeeTag(getSpeakerID()));

@@ -152,4 +152,11 @@ public class Constants {
         public static final int STOCKPILE_RPM = 3500;
         public static final double MAX_SHOOTING_DISTANCE = 100;
     }
+    
+    public static final class Vision{
+        public static final double CAMERA_HEIGHT = 0.3254381509;//m
+        public static final double MOUNT_PITCH = -26.2;//deg -26.2
+        public static final double MOUNT_YAW = 0;;//deg
+        public static final double NOTE_HEIGHT = .02;//m
+    }
 }

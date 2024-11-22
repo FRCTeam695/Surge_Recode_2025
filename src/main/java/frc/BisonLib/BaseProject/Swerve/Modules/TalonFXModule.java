@@ -259,10 +259,10 @@ public class TalonFXModule{
               -desiredState.speedMetersPerSecond, desiredState.angle.rotateBy(Rotation2d.kPi));
         }
         
-        driveMotor.set(Math.cos(Math.abs(desiredState.angle.getRadians() -  latestAngle.getRadians())) * desiredState.speedMetersPerSecond/Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS);
-        turnMotor.setControl(
-            rotationSetter.withPosition(desiredState.angle.getRotations())
-        );
+        //driveMotor.set(Math.cos(Math.abs(desiredState.angle.getRadians() -  latestAngle.getRadians())) * desiredState.speedMetersPerSecond/Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS);
+        // turnMotor.setControl(
+        //     rotationSetter.withPosition(desiredState.angle.getRotations())
+        // );
 
         /*
         SmartDashboard.putNumber("Module " + (this.index+1) + " Desired Velocity", desiredState.speedMetersPerSecond);
