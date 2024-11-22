@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -192,7 +193,7 @@ public class Swerve extends SwerveBase{
     }
 
 
-    public Command driveToNoteWithPoses(Supplier<Optional<Transform2d>> noteTransform, Supplier<ChassisSpeeds> speedsSupplier){
+    public Command driveToNoteWithPoses(Supplier<Optional<Translation2d>> noteTranslation, Supplier<ChassisSpeeds> speedsSupplier){
         return 
             runOnce(
                 ()->{
@@ -203,10 +204,10 @@ public class Swerve extends SwerveBase{
                 run(
                     ()->{
                         ChassisSpeeds speeds = speedsSupplier.get();
-                        Optional<Transform2d> transform = noteTransform.get();
+                        Optional<Translation2d> optionalTranslation = noteTranslation.get();
                         Pose2d robotPose = getSavedPose();
-                        if(transform.isPresent()){
-                            notePose = robotPose.plus(transform.get());
+                        if(optionalTranslation.isPresent()){
+                            notePose = robotPose.plus(new Transform2d(optionalTranslation.get(), new Rotation2d()));
                             m_field.getObject("targeted note").setPose(notePose);
                             hasSeenNote = true;
                         }
@@ -230,7 +231,7 @@ public class Swerve extends SwerveBase{
                             speeds.vxMetersPerSecond = -altered_vx;
                             speeds.vyMetersPerSecond = altered_vy;
                         }
-                        driveFromSpeeds(speeds, true);
+                        drive(speeds, true);
                     }
                 )
         );

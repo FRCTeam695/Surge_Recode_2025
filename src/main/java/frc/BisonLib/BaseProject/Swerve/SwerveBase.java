@@ -674,7 +674,7 @@ public class SwerveBase extends SubsystemBase {
             speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getSavedPose().getRotation());
         }
 
-        this.driveFromSpeeds(speeds, false);
+        this.driveFromSpeeds(speeds, true);
     }
 
 
