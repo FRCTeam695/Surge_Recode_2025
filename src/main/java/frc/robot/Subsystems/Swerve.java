@@ -100,7 +100,7 @@ public class Swerve extends SwerveBase{
                     driveFromSpeeds(speds, true);
                 }
                 else{
-                    driveFromSpeeds(speeds, true);
+                    drive(speeds, true);
                 }
             }
         );
@@ -230,8 +230,11 @@ public class Swerve extends SwerveBase{
     
                             speeds.vxMetersPerSecond = -altered_vx;
                             speeds.vyMetersPerSecond = altered_vy;
+
+                            driveFromSpeeds(speeds, true);
+                        }else{
+                            drive(speeds, true);
                         }
-                        drive(speeds, true);
                     }
                 )
         );
