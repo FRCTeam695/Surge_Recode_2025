@@ -169,7 +169,7 @@ public class VisionManager extends VisionManagerBase{
         return pitchToNote;
     }
 
-    public static Translation2d getRobotTranslationToNote(){//robot to note (positive is forward, right)
+    private Translation2d getRobotTranslationToNote(){//robot to note (positive is forward, right)
         Translation2d noteTranslation;
 
         //distance from target
@@ -198,6 +198,10 @@ public class VisionManager extends VisionManagerBase{
 
     public Optional<Double> getYawToSpeaker(){
         return yawToSpeaker;
+    }
+
+    public Optional<Translation2d> getRobotToNote(){
+        return robotToNote;
     }
 
 

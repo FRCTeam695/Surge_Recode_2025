@@ -469,9 +469,9 @@ public class SwerveBase extends SubsystemBase {
      */
     public Command runWheelCharacterization(){
 
-        // total distance each module should travel
+        // total distance each module should travel for one rotation
         // circumferenc = pi * d
-        double distance_traveled = Constants.Swerve.WHEEL_BASE_METERS * Math.PI;
+        double one_rotation_distance = Constants.Swerve.WHEEL_BASE_METERS * Math.PI * Math.sqrt(2);
 
         return runOnce(()-> {
 
@@ -511,7 +511,7 @@ public class SwerveBase extends SubsystemBase {
                     //original_circumference/new_circumference = calculated_distance/actual_distance
                     // actual_distance * original_circumference = new_circumference * calculated_distance
                     // new_circumference = actual_distance * original_circumference / (calculated_distance)
-                    double new_circumference = distance_traveled * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS / (initialPositions[mod.index].distanceMeters - currentPositions[mod.index].distanceMeters);
+                    double new_circumference = one_rotation_distance * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS / (initialPositions[mod.index].distanceMeters - currentPositions[mod.index].distanceMeters);
                     avg_calculated_wheel_circumference += new_circumference;
                     SmartDashboard.putNumber("initial distance " + mod.index, initialPositions[mod.index].distanceMeters);
                     SmartDashboard.putNumber("current distance " + mod.index, currentPositions[mod.index].distanceMeters);

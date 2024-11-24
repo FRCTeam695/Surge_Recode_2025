@@ -165,38 +165,39 @@ public class RobotContainer {
     Driver.b().onTrue(Swerve.runWheelCharacterization());
     Driver.y().toggleOnTrue(visionIntake().andThen(autoShoot()).andThen(visionIntake()).andThen(autoShoot()).andThen(visionIntake()).andThen(autoShoot()).andThen(visionIntake()).andThen(autoShoot()));
     Driver.back().onTrue(Swerve.resetGyro());
-
     Driver.a().onTrue(Shooter.setScoringStatus("amp")
       .andThen(
         parallel(
           Swerve.rotateToAngle(()-> -90., Driver::getRequestedChassisSpeeds).until(()-> !Shooter.getScoringStatus().equals("amp")), 
           Arm.goToPosition(()-> Constants.Arm.AMP_POSITION_RADIANS))));
-
     Driver.x().onTrue(Shooter.setScoringStatus("stockpile")
                     .andThen(
                       parallel(
                       Swerve.snapToPassAngle(Driver::getRequestedChassisSpeeds),
                       Arm.goToPosition(()-> Constants.Arm.STOCKPILE_POSITION_RADIANS),
                       Shooter.runVelocity(()-> Constants.Shooter.STOCKPILE_RPM))));
-
     Driver.leftTrigger(0.2).onTrue(
           Arm.goToPosition(()-> Constants.Arm.SHOOT_POSITION_RADIANS)
           .andThen(shoot(()->2222))
           .andThen(Shooter.setScoringStatus("intake"))
     );
     Driver.rightBumper().onTrue(shoot(()->1000));
-
-    Driver.leftBumper().onTrue
-    (
-        deadline
-        (
-        intake(),
-        Swerve.rotateToNote(()-> Driver.getRequestedChassisSpeeds(), ()-> Vision.getYawToNote())
-        )
-        .until(()-> Operator.getHID().getRightBumperButtonPressed()).withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+    Driver.leftBumper().whileTrue(
+      deadline(
+        intake(), 
+        Swerve.driveToNoteWithPoses(Vision::getRobotToNote, Driver::getRequestedChassisSpeeds))
     );
-
     Driver.rightTrigger(0.2).onTrue(shootNoteCommand().andThen(Arm.goToPosition(()-> Constants.Arm.INTAKE_POSITION_RADIANS)));
+
+    // Driver.leftBumper().onTrue
+    // (
+    //     deadline
+    //     (
+    //     intake(),
+    //     Swerve.rotateToNote(()-> Driver.getRequestedChassisSpeeds(), ()-> Vision.getYawToNote())
+    //     )
+    //     .until(()-> Operator.getHID().getRightBumperButtonPressed()).withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+    // );
 
 
 
