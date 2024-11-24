@@ -2,9 +2,12 @@ package frc.robot.Subsystems;
 
 import java.util.Optional;
 
+import javax.swing.text.DefaultStyledDocument.ElementSpec;
+
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -32,6 +35,7 @@ public class VisionManager extends VisionManagerBase{
 
     private InterpolatingDoubleTreeMap armTable;
     private InterpolatingDoubleTreeMap shooterTable;
+
 
     public Trigger tagInSight;
     public Trigger canIntakeNote;
@@ -180,11 +184,104 @@ public class VisionManager extends VisionManagerBase{
                     Math.cos(Math.toRadians(Constants.Vision.MOUNT_YAW + yawToNote.get()));
         
         //angle  
-        Rotation2d angle = new Rotation2d(Math.toRadians(90+ (-yawToNote.get())) );//flip the yaw in order to have ccw as positive
-
+        Rotation2d angle = new Rotation2d(Math.toRadians(90 +  (-yawToNote.get())) );//flip the yaw in order to have ccw as positive
+        // SmartDashboard.putNumber("angle", angle.getDegrees());
+        // SmartDashboard.putNumber("yaw", yawToNote.get());
+        
         noteTranslation = new Translation2d(distance, angle);
         return noteTranslation;
     }
+
+    public boolean isNoteCutOffPitch(){
+        if(pitchToNote.get() < -11.83){
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isNoteCutOffYaw(){
+        if(!canSeeNote){//if cannot see the note, return true that note is cut off
+            return true;
+        }
+        double a = 2.13542;
+        double b = -38.89291;
+        if(pitchToNote.get() > a*Math.abs(yawToNote.get()) + b){ //if note is within the regression
+            return false;
+        } else {
+            return true; 
+        }
+    }
+    //tranlsation holds the values for new yaw and new pitch
+    //x is yaw, y is pitch
+
+    public Translation2d getCorrectCutoffNote(){
+        double newPitch = pitchToNote.get();
+        double newYaw = yawToNote.get();
+        double a = 2.13542;
+        double b = -38.89291;
+        if (isNoteCutOffPitch()) {
+            double diff = Math.abs(pitchToNote.get() + 11.83);
+            newPitch = pitchToNote.get() - diff;
+        }
+
+
+        if (isNoteCutOffYaw()) {
+            double cutoffYaw = (newPitch - b) / a;
+            double diff = Math.abs( cutoffYaw - Math.abs(newYaw) );
+            if(newYaw > 0){
+                newYaw = newYaw + diff;
+            }else{
+                newYaw = newYaw - diff;
+            }
+        }
+        SmartDashboard.putNumber("corrected Yaw", newYaw);
+        SmartDashboard.putNumber("corrected Pitch", newPitch);
+        return new Translation2d(newYaw, newPitch);
+    }
+    public Translation2d getRobotToCutoffNoteCorrection(){
+        Translation2d note = getCorrectCutoffNote();
+        double m_yaw = note.getX();
+        double m_pitch = note.getY();
+
+        Translation2d noteTranslation;
+
+        //distance from target
+        //https://www.chiefdelphi.com/t/calculating-distance-to-vision-target/387183/5 
+        
+        double distance = (Constants.Vision.NOTE_HEIGHT - Constants.Vision.CAMERA_HEIGHT) / 
+                    Math.tan(Math.toRadians(Constants.Vision.MOUNT_PITCH + m_pitch)) / 
+                    Math.cos(Math.toRadians(Constants.Vision.MOUNT_YAW + m_yaw));
+        
+        //angle  
+        Rotation2d angle = new Rotation2d(Math.toRadians(90 +  (-m_yaw)) );//flip the yaw in order to have ccw as positive
+         SmartDashboard.putNumber("angle", angle.getDegrees());
+        // SmartDashboard.putNumber("yaw", yawToNote.get());
+        
+        noteTranslation = new Translation2d(distance, angle);
+        SmartDashboard.putNumber("fwd correct", noteTranslation.getY());
+        SmartDashboard.putNumber("dist", distance);
+        
+        return noteTranslation;
+
+    }
+
+    // public Translation2d robotToCutoffNoteregression(){//OUTDATED
+    //     double C = -4.438623;
+    //     double yawC =0.734597;
+    //     double pitchC = 0.0581734;
+    //     double STR =  C + yawC * Math.abs(yawToNote.get()) + pitchC * Math.abs(pitchToNote.get());
+    //     //flip if negative
+    //     if(yawToNote.get() < 0){
+    //         STR *= -1;
+    //     }
+        
+    //     //flat approximazation
+    //     double FWD = STR / Math.tan( Math.toRadians(yawToNote.get()));
+    //     Translation2d note = new Translation2d(STR,FWD);
+    //     SmartDashboard.putNumber("cutoff calculated str", note.getX());
+    //     SmartDashboard.putNumber("cutoff calculated fwd", note.getY());
+    //     return note;
+    // }
 
     
     public double getArmPitchToSpeaker(){
@@ -234,7 +331,11 @@ public class VisionManager extends VisionManagerBase{
             SmartDashboard.putNumber("yaw to note", yawToNote.get());
             pitchToNote = Optional.of(intakeCamera.getPitchToTarget());
             SmartDashboard.putNumber("Pitch to note", pitchToNote.get());
-            robotToNote = Optional.of(getRobotTranslationToNote());
+            if(!isNoteCutOffYaw()){
+                robotToNote = Optional.of(getRobotTranslationToNote());
+            } else{
+                robotToNote = Optional.of(getRobotToCutoffNoteCorrection());
+            }
             SmartDashboard.putNumber("Robot To Note FWD", robotToNote.get().getY()*39.37);
             SmartDashboard.putNumber("Robot To Note STR", robotToNote.get().getX()*39.37);
         }
@@ -243,6 +344,7 @@ public class VisionManager extends VisionManagerBase{
             pitchToNote = Optional.empty();
             robotToNote = Optional.empty();
         }
+        SmartDashboard.putBoolean("Note is cut off", isNoteCutOffYaw());
         SmartDashboard.putBoolean("can see note", canSeeNote);
         SmartDashboard.putBoolean("Can see tag", canSeeTag);//cameras[0].canSeeTag(getSpeakerID()));
         SmartDashboard.putNumber("RPM to speaker", getShooterRPMToSpeaker());

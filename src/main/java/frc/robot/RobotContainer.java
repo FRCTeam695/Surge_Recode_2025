@@ -229,7 +229,7 @@ public class RobotContainer {
     Intake.setDefaultCommand(Intake.runIntakeAndIndexerPercent(0.0));
     AmpBar.setDefaultCommand(AmpBar.retract());
 
-    /* 
+    
     //This is the Swerve subsystem default command, this allows the driver to drive the robot
     Swerve.setDefaultCommand
       (
@@ -248,7 +248,7 @@ public class RobotContainer {
               Swerve
           ).withName("Swerve Default Command")
       );
-      */
+      
   }
 
   // The command specified in here is run in autonomous
