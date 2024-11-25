@@ -254,12 +254,12 @@ public class VisionManager extends VisionManagerBase{
         
         //angle  
         Rotation2d angle = new Rotation2d(Math.toRadians(90 +  (-m_yaw)) );//flip the yaw in order to have ccw as positive
-         SmartDashboard.putNumber("angle", angle.getDegrees());
+        //  SmartDashboard.putNumber("angle", angle.getDegrees());
         // SmartDashboard.putNumber("yaw", yawToNote.get());
         
         noteTranslation = new Translation2d(distance, angle);
-        SmartDashboard.putNumber("fwd correct", noteTranslation.getY());
-        SmartDashboard.putNumber("dist", distance);
+        // SmartDashboard.putNumber("fwd correct", noteTranslation.getY());
+        // SmartDashboard.putNumber("dist", distance);
         
         return noteTranslation;
 
@@ -328,27 +328,28 @@ public class VisionManager extends VisionManagerBase{
 
         if(canSeeNote){
             yawToNote = Optional.of(intakeCamera.getYawToTarget());
-            SmartDashboard.putNumber("yaw to note", yawToNote.get());
+            // SmartDashboard.putNumber("yaw to note", yawToNote.get());
             pitchToNote = Optional.of(intakeCamera.getPitchToTarget());
-            SmartDashboard.putNumber("Pitch to note", pitchToNote.get());
+            // SmartDashboard.putNumber("Pitch to note", pitchToNote.get());
             if(!isNoteCutOffYaw()){
                 robotToNote = Optional.of(getRobotTranslationToNote());
             } else{
                 robotToNote = Optional.of(getRobotToCutoffNoteCorrection());
             }
-            SmartDashboard.putNumber("Robot To Note FWD", robotToNote.get().getY()*39.37);
-            SmartDashboard.putNumber("Robot To Note STR", robotToNote.get().getX()*39.37);
+            // SmartDashboard.putNumber("Robot To Note FWD", robotToNote.get().getY()*39.37);
+            // SmartDashboard.putNumber("Robot To Note STR", robotToNote.get().getX()*39.37);
         }
        else{
             yawToNote = Optional.empty();
             pitchToNote = Optional.empty();
             robotToNote = Optional.empty();
         }
-        SmartDashboard.putBoolean("Note is cut off", isNoteCutOffYaw());
-        SmartDashboard.putBoolean("can see note", canSeeNote);
-        SmartDashboard.putBoolean("Can see tag", canSeeTag);//cameras[0].canSeeTag(getSpeakerID()));
-        SmartDashboard.putNumber("RPM to speaker", getShooterRPMToSpeaker());
-        SmartDashboard.putNumber("Arm Pitch to Speaker", Math.toDegrees(getArmPitchToSpeaker()));
+        // SmartDashboard.putBoolean("Note is cut off", isNoteCutOffYaw());
+        // SmartDashboard.putBoolean("can see note", canSeeNote);
+        // SmartDashboard.putBoolean("Can see tag", canSeeTag);//cameras[0].canSeeTag(getSpeakerID()));
+        // SmartDashboard.putNumber("RPM to speaker", getShooterRPMToSpeaker());
+        // SmartDashboard.putNumber("Arm Pitch to Speaker", Math.toDegrees(getArmPitchToSpeaker()));
+        SmartDashboard.putBoolean("tag in sight", tagInSight.getAsBoolean());
      }
     
 }

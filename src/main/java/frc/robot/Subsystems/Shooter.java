@@ -160,7 +160,7 @@ public class Shooter extends SubsystemBase {
           shooterNeo1PID.setReference(setPointRPM, SparkFlex.ControlType.kVelocity);
           shooterNeo2PID.setReference(-setPointRPM, SparkFlex.ControlType.kVelocity);
 
-          //SmartDashboard.putNumber("SetPoint", setPointRPM);
+          SmartDashboard.putNumber("SetPoint", setPointRPM);
         },
         interrupted-> {
         setPointRPM = 0;
@@ -180,10 +180,10 @@ public class Shooter extends SubsystemBase {
     // This method will be called once per scheduler run
     //SmartDashboard.putNumber("Position 2", shooterNeoEncoder2.getPosition());
     //SmartDashboard.putNumber("Position 1", shooterNeoEncoder1.getPosition());
-    // SmartDashboard.putBoolean("Shooter at Setpoint", atVelocitySetpoint.getAsBoolean());
+    SmartDashboard.putBoolean("Shooter at Setpoint", atVelocitySetpoint.getAsBoolean());
     // SmartDashboard.putBoolean("Shooter Up To Speed", shooterIsUpToSpeed());
-    // SmartDashboard.putNumber("Velocity 1", shooterNeoEncoder1.getVelocity());
-    // SmartDashboard.putNumber("Velocity 2", shooterNeoEncoder2.getVelocity());
+    SmartDashboard.putNumber("Velocity 1", shooterNeoEncoder1.getVelocity());
+    SmartDashboard.putNumber("Velocity 2", shooterNeoEncoder2.getVelocity());
     // SmartDashboard.putBoolean("Ready To Intake", readyToIntake.getAsBoolean());
   }
 

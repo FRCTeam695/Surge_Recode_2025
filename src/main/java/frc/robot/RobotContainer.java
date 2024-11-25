@@ -182,7 +182,7 @@ public class RobotContainer {
           .andThen(Shooter.setScoringStatus("intake"))
     );
     Driver.rightBumper().onTrue(shoot(()->1000));
-    Driver.leftBumper().whileTrue(
+    Driver.leftBumper().onTrue(
       deadline(
         intake(), 
         Swerve.driveToNoteWithPoses(Vision::getRobotToNote, Driver::getRequestedChassisSpeeds))

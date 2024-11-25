@@ -221,7 +221,7 @@ public class Arm extends SubsystemBase {
     // SmartDashboard.putNumber("ARM ENCODER POSITION", Math.toDegrees(relPos));
     // SmartDashboard.putNumber("Latest Arm Absolute Position", latest_abs_pos);
     // SmartDashboard.putNumber("Arm Absolute Position Moving Average", latest_abs_moving_avg);
-    // SmartDashboard.putBoolean("Arm at Setpoint", atPositionSetpoint.getAsBoolean());
+    SmartDashboard.putBoolean("Arm at Setpoint", atPositionSetpoint.getAsBoolean());
 
     // SmartDashboard.putNumber("Arm Goal", Math.toDegrees(goal));
     // SmartDashboard.putBoolean("AT GOAL", atGoal());

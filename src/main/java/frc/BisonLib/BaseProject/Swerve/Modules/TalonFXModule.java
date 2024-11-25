@@ -210,6 +210,10 @@ public class TalonFXModule{
         return drivePositionSignal.getValueAsDouble();
     }
 
+    public double getUncachedDrivePosition(){
+        return driveMotor.getPosition().getValueAsDouble();
+    }
+
     public double getDriveAcceleration(){
         return driveMotor.getAcceleration().getValueAsDouble() / Constants.Swerve.DRIVING_GEAR_RATIO * Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS;
     }

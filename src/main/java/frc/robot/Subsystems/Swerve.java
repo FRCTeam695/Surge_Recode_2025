@@ -207,14 +207,16 @@ public class Swerve extends SwerveBase{
                         Optional<Translation2d> optionalTranslation = noteTranslation.get();
                         Pose2d robotPose = getSavedPose();
                         if(optionalTranslation.isPresent()){
-                            notePose = robotPose.plus(new Transform2d(optionalTranslation.get(), new Rotation2d()));
+                            notePose = robotPose.plus(new Transform2d(optionalTranslation.get().rotateBy(new Rotation2d(Math.PI/2)), new Rotation2d()));
                             m_field.getObject("targeted note").setPose(notePose);
                             hasSeenNote = true;
                         }
                         if(hasSeenNote){
                             RobotContainer.Driver.rumble(()-> 0.65);
                             double altered_vx, altered_vy;
-                            double yaw = notePose.minus(robotPose).getTranslation().getAngle().getDegrees();
+                            double unaltered_yaw = notePose.minus(robotPose).getTranslation().getAngle().getDegrees();
+                            double yaw = Math.copySign(180- Math.abs(unaltered_yaw), unaltered_yaw);
+                            SmartDashboard.putNumber("yaw robot to note", yaw);
                             altered_vy = 0.06 * yaw;
                             double wanted_vel = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
     
