@@ -64,11 +64,11 @@ public class Swerve extends SwerveBase{
                             }
 
                             ChassisSpeeds speds = new ChassisSpeeds(-altered_vx, altered_vy, 0);
-                            driveFromSpeeds(speds, true);
+                            driveRobotRelative(speds, true);
                         }
                     }
                     else{
-                        driveFromSpeeds(new ChassisSpeeds(), true);
+                        driveRobotRelative(new ChassisSpeeds(), true);
                     }
                 }
             )
@@ -97,7 +97,7 @@ public class Swerve extends SwerveBase{
                     }
 
                     ChassisSpeeds speds = new ChassisSpeeds(-altered_vx, altered_vy, 0);
-                    driveFromSpeeds(speds, true);
+                    driveRobotRelative(speds, true);
                 }
                 else{
                     drive(speeds, true);
@@ -138,11 +138,11 @@ public class Swerve extends SwerveBase{
                             }
 
                             ChassisSpeeds speds = new ChassisSpeeds(-altered_vx, altered_vy, 0);
-                            driveFromSpeeds(speds, true);
+                            driveRobotRelative(speds, true);
                         }
                     }
                     else{
-                        driveFromSpeeds(new ChassisSpeeds(), true);
+                        driveRobotRelative(new ChassisSpeeds(), true);
                     }
                 }
             )
@@ -233,7 +233,7 @@ public class Swerve extends SwerveBase{
                             speeds.vxMetersPerSecond = -altered_vx;
                             speeds.vyMetersPerSecond = altered_vy;
 
-                            driveFromSpeeds(speeds, true);
+                            driveRobotRelative(speeds, true);
                         }else{
                             drive(speeds, true);
                         }

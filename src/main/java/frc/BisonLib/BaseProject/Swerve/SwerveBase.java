@@ -217,7 +217,7 @@ public class SwerveBase extends SubsystemBase {
                 this::getSavedPose, // Robot pose supplier
                 this::resetOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
                 this::getLatestChassisSpeed, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-                (speeds, feedforwards) -> driveFromSpeeds(speeds, false), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+                (speeds, feedforwards) -> driveRobotRelative(speeds, false), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
                 pathplannerController,
                 config,
                 this::isRedAlliance,
@@ -598,8 +598,8 @@ public class SwerveBase extends SubsystemBase {
      * 
      * @param chassisSpeeds The chassis speeds the robot should travel at
      */
-    public void driveFromSpeeds(ChassisSpeeds chassisSpeeds, boolean useSetpointGenerator) {
-        //if(!useSetpointGenerator){
+    public void driveRobotRelative(ChassisSpeeds chassisSpeeds, boolean useSetpointGenerator) {
+        if(!useSetpointGenerator){
             // discretizes the chassis speeds (acccounts for robot skew)
             chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, Constants.Swerve.ROBOT_LOOP_TIME);
 
@@ -609,17 +609,17 @@ public class SwerveBase extends SubsystemBase {
 
             // set the modules to their desired speeds
             setModules(moduleStates);
-        //}
-        // else{
-        //     previousSetpoint = setpointGenerator.generateSetpoint(
-        //         previousSetpoint, // The previous setpoint
-        //         chassisSpeeds, // The desired target speeds
-        //         Constants.Swerve.ROBOT_LOOP_TIME // The loop time of the robot code, in seconds
-        //     );
+        }
+        else{
+            previousSetpoint = setpointGenerator.generateSetpoint(
+                previousSetpoint, // The previous setpoint
+                chassisSpeeds, // The desired target speeds
+                Constants.Swerve.ROBOT_LOOP_TIME // The loop time of the robot code, in seconds
+            );
 
-        //     //set the modules to their desired speeds
-        //     setModules(previousSetpoint.moduleStates());
-        // }
+            //set the modules to their desired speeds
+            setModules(previousSetpoint.moduleStates());
+        }
     }
 
 
@@ -673,7 +673,7 @@ public class SwerveBase extends SubsystemBase {
             return;
         }
 
-        driveFromSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(speedsSupplier.get(), getSavedPose().getRotation()), false);
+        driveRobotRelative(ChassisSpeeds.fromFieldRelativeSpeeds(speedsSupplier.get(), getSavedPose().getRotation()), false);
     }
     
     /**
@@ -689,7 +689,7 @@ public class SwerveBase extends SubsystemBase {
             speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getSavedPose().getRotation());
         }
 
-        this.driveFromSpeeds(speeds, false);
+        this.driveRobotRelative(speeds, false);
     }
 
 
