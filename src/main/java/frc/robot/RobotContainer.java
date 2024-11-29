@@ -19,9 +19,6 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.BisonLib.BaseProject.Controller.EnhancedCommandController;
 import frc.BisonLib.BaseProject.Swerve.Modules.TalonFXModule;
-import frc.BisonLib.BaseProject.Vision.AprilTagCamera;
-import frc.BisonLib.BaseProject.Vision.Limelight.LLAprilTagCamera;
-import frc.BisonLib.BaseProject.Vision.Limelight.LLIntakeCamera;
 import frc.robot.Subsystems.*;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
@@ -39,24 +36,9 @@ public class RobotContainer {
   private final Shooter Shooter;
   private final Intake Intake;
   private final LEDs LEDs;
-
-  // Creates an array that holds all our pose estimation cameras, pass this into Swerve
-  private final AprilTagCamera[] cameras = new AprilTagCamera[] 
-          {
-            // new PVAprilTagCamera("speakerCamera", 0., 
-            //   new Transform3d
-            //   (
-            //     Units.inchesToMeters(13.5),
-            //     0., 
-            //     Units.inchesToMeters(8), 
-            //     new Rotation3d(0, -65, 0)
-            //   )
-            // )
-            new LLAprilTagCamera("limelight-speaker", 0.)
-          };
   
-  private final LLIntakeCamera intakeCamera = new LLIntakeCamera("limelight-intake");
-  
+  private final String[] camNames = {"limelight-speaker"};
+    
   // Creates an array of all the swerve modules, pass this into Swerve
   private final TalonFXModule[] modules = new TalonFXModule[] 
           {
@@ -78,9 +60,8 @@ public class RobotContainer {
 
   public RobotContainer() {
 
-    Vision = new VisionManager(cameras, intakeCamera);
-    Swerve = new Swerve(Vision, modules);
-    Vision.setHeadingSupplier(()-> Swerve.getSavedPose().getRotation().getDegrees());
+    Vision = new VisionManager(camNames);
+    Swerve = new Swerve(camNames, modules);
     AmpBar = new AmpBar();
     Shooter = new Shooter();
     Intake = new Intake();
@@ -157,7 +138,6 @@ public class RobotContainer {
     Operator.a().onTrue(Arm.goToPosition(()-> Constants.Arm.INTAKE_POSITION_RADIANS));
     Operator.b().whileTrue(Intake.runIndexerToSpeed(-0.2));
     Operator.x().onTrue(Arm.goToPosition(()-> 0.44).andThen(Shooter.setScoringStatus("climb")));
-    Operator.rightBumper().onTrue(Vision.turnOffLimelightLEDs());
     Operator.y().whileTrue(Arm.goToPosition(()-> Constants.Arm.INTAKE_POSITION_RADIANS).andThen(Intake.runIntakeAndIndexerPercent(-1)));
 
 

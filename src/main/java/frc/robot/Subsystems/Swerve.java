@@ -21,8 +21,8 @@ public class Swerve extends SwerveBase{
     public boolean hasSeenNote;
     public Pose2d notePose;
 
-    public Swerve(VisionManager visionManager, TalonFXModule[] modules) {
-        super(visionManager, modules);
+    public Swerve(String[] camNames, TalonFXModule[] modules) {
+        super(camNames, modules);
 
         hasSeenNote = false;
         notePose = new Pose2d();

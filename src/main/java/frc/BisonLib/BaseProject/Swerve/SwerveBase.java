@@ -5,8 +5,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.BisonLib.BaseProject.Swerve.Modules.TalonFXModule;
-import frc.BisonLib.BaseProject.Vision.VisionManagerBase;
-import frc.BisonLib.BaseProject.Vision.VisionPosePacket;
+import frc.BisonLib.BaseProject.LimelightHelpers;
 import frc.robot.Constants;
 
 import static edu.wpi.first.wpilibj2.command.Commands.deadline;
@@ -41,6 +40,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -49,7 +49,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class SwerveBase extends SubsystemBase {
 
     protected TalonFXModule[] modules;
-    protected final VisionManagerBase visionManager;
 
     protected final Field2d m_field = new Field2d();
     private final SwerveDrivePoseEstimator odometry;
@@ -95,6 +94,7 @@ public class SwerveBase extends SubsystemBase {
     private SwerveModulePosition[] currentModulePositions = new SwerveModulePosition[4];
     private SwerveModuleState[] currentModuleStates = new SwerveModuleState[4];
 
+    private String[] camNames;
     private final SwerveSetpointGenerator setpointGenerator;
     private SwerveSetpoint previousSetpoint;
 
@@ -104,7 +104,7 @@ public class SwerveBase extends SubsystemBase {
      * @param cameras An array of cameras used for pose estinmation
      * @param moduleTypes The type of swerve module on the swerve drive
      */
-    public SwerveBase(VisionManagerBase visionManager, TalonFXModule[] modules) {
+    public SwerveBase(String[] camNames, TalonFXModule[] modules) {
         // 4 modules * 3 signals per module
         allOdomSignals = new BaseStatusSignal[(4 * 3)];
         for(int i = 0; i < modules.length; ++i){
@@ -114,8 +114,7 @@ public class SwerveBase extends SubsystemBase {
             allOdomSignals[i*3 + 2] = signals[2]; // module rotation (cancoder)
         }
 
-
-        this.visionManager = visionManager;
+        this.camNames = camNames;
 
         // Holds all the modules
         this.modules = modules;
@@ -697,23 +696,28 @@ public class SwerveBase extends SubsystemBase {
      * updateOdometryWithVision uses vision to add measurements to the odometry
      */
     public void updateOdometryWithVision(){
-        VisionPosePacket[] poses = visionManager.getPoses();
 
-        for(var pose : poses){
+        for(String cam : camNames){
+            LimelightHelpers.SetRobotOrientation(cam, getSavedPose().getRotation().getDegrees(), 0, 0, 0, 0, 0);
+            LimelightHelpers.PoseEstimate mt2_estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
+            double[] stddevs = NetworkTableInstance.getDefault().getTable("limelight").getEntry("stddevs").getDoubleArray(new double[6]);
+
+
+
 
             // Only update pose if it is valid and if we arent spinning too fast
-            if(pose.isValidPose && getGyroRate() < 720){
+            if(mt2_estimate.tagCount != 0 && getGyroRate() < 720){
 
                 // Finally, we actually add the measurement to our odometry
                 odometryLock.writeLock().lock();
                 try{
                     odometry.addVisionMeasurement
                     (
-                        pose.pose, 
-                        pose.timestamp,
+                        mt2_estimate.pose, 
+                        mt2_estimate.timestampSeconds,
                         
                         // This way it doesn't trust the rotation reading from the vision
-                        VecBuilder.fill(pose.stdDev, pose.stdDev, 999999)
+                        VecBuilder.fill(stddevs[6], stddevs[7], 9999999)
                     );
                 }finally{
                     odometryLock.writeLock().unlock();
@@ -721,7 +725,7 @@ public class SwerveBase extends SubsystemBase {
                 
                 // This puts the pose reading from each camera onto the Field2d Widget,
                 // Docs - https://docs.wpilib.org/en/stable/docs/software/dashboards/glass/field2d-widget.html
-                m_field.getObject(pose.name).setPose(pose.pose);
+                m_field.getObject(cam).setPose(mt2_estimate.pose);
             }
         }  
     }

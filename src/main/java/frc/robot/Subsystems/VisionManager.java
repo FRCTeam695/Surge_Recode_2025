@@ -8,15 +8,12 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.BisonLib.BaseProject.Vision.AprilTagCamera;
-import frc.BisonLib.BaseProject.Vision.VisionManagerBase;
-import frc.BisonLib.BaseProject.Vision.Limelight.LLIntakeCamera;
-import frc.BisonLib.BaseProject.Vision.Limelight.LimelightHelpers;
+import frc.BisonLib.BaseProject.LimelightHelpers;
 import frc.robot.Constants;
 
-public class VisionManager extends VisionManagerBase{
+public class VisionManager extends SubsystemBase{
     public Optional<Double> distanceToSpeaker;
     public Optional<Double> yawToSpeaker;
     public Optional<Double> pitchToSpeaker;
@@ -37,12 +34,11 @@ public class VisionManager extends VisionManagerBase{
 
     public Trigger tagInSight;
     public Trigger canIntakeNote;
-    public LLIntakeCamera intakeCamera;
 
-    public VisionManager(AprilTagCamera[] cameras, LLIntakeCamera intakeCamera){
-        super(cameras);
+    public String[] camNames;
 
-        this.intakeCamera = intakeCamera;
+    public VisionManager(String[] camNames){
+        this.camNames = camNames;
 
         /*
          * MAKE SURE TO FIND THE MAX WORKABLE RANGE TO SHOOT FROM
@@ -112,6 +108,7 @@ public class VisionManager extends VisionManagerBase{
         //isWithinShootingRange = new Trigger(()-> withinShootingRange);
         canIntakeNote = new Trigger(()-> canSeeNote);
         tagInSight = new Trigger(()-> canSeeTag);
+        LimelightHelpers.setPriorityTagID(camNames[0], getSpeakerID());
     }
 
     public boolean isRedAlliance(){
@@ -128,29 +125,17 @@ public class VisionManager extends VisionManagerBase{
     }
 
     private Optional<Double> calculateYawToSpeaker(){
-        Double yaw = cameras[0].getYawToTag(getSpeakerID());
-        if(yaw == null) return Optional.empty();
-        return Optional.of(yaw);
+        if(LimelightHelpers.getTV(camNames[0])){
+            return Optional.of(LimelightHelpers.getTX(camNames[0]));
+        }
+        return Optional.empty();
     }
 
     public Optional<Double> getPitchToSpeakerTag(){
-        Double pitch = cameras[0].getPitchToTag(getSpeakerID());
-        if(pitch == null){
-            return Optional.empty();
+        if(LimelightHelpers.getTV(camNames[0])){
+            return Optional.of(LimelightHelpers.getTY(camNames[0]));
         }
-        else{
-            return Optional.of(pitch);
-        }
-    }
-
-
-    // doesnt actually turn them on, i just dont want them to turn on
-    public Command turnOnLimelightLEDs(){
-        return runOnce(()-> LimelightHelpers.setPipelineIndex("limelight-intake", 0));
-    }
-
-    public Command turnOffLimelightLEDs(){
-        return runOnce(()-> LimelightHelpers.setPipelineIndex("limelight-intake", 0));
+        return Optional.empty();
     }
 
 
@@ -302,12 +287,11 @@ public class VisionManager extends VisionManagerBase{
 
     @Override
     public void periodic(){ 
-        cameras[0].loadLatestResult();
         //distanceToSpeaker = calculateDistanceToSpeaker();
         pitchToSpeaker = getPitchToSpeakerTag();
         yawToSpeaker = calculateYawToSpeaker();
-        canSeeNote = intakeCamera.canSeeTarget();
-        latency = intakeCamera.getLatency();
+        canSeeNote = LimelightHelpers.getTV("limelight-intake");
+        latency = LimelightHelpers.getLatency_Capture("limelight-intake") + LimelightHelpers.getLatency_Pipeline("limelight-intake");
 
         if(pitchToSpeaker.isPresent() && yawToSpeaker.isPresent()){
             //shooterRPM = 2222;
@@ -325,9 +309,9 @@ public class VisionManager extends VisionManagerBase{
 
 
         if(canSeeNote){
-            yawToNote = Optional.of(intakeCamera.getYawToTarget());
+            yawToNote = Optional.of(LimelightHelpers.getTX("limelight-intake"));
             // SmartDashboard.putNumber("yaw to note", yawToNote.get());
-            pitchToNote = Optional.of(intakeCamera.getPitchToTarget());
+            pitchToNote = Optional.of(LimelightHelpers.getTY("limelight-intake"));
             // SmartDashboard.putNumber("Pitch to note", pitchToNote.get());
             if(!isNoteCutOffYaw()){
                 robotToNote = Optional.of(getRobotTranslationToNote());
