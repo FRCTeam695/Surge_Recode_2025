@@ -16,6 +16,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -43,6 +44,7 @@ public class TalonFXModule{
     // private final PIDController driveController;
 
     private final PositionVoltage rotationSetter = new PositionVoltage(0.0);
+    private final VelocityVoltage velocitySetter = new VelocityVoltage(0.0);
     private SwerveModulePosition latestPosition = new SwerveModulePosition();
 
     /*
@@ -115,6 +117,9 @@ public class TalonFXModule{
     public void configDriveMotor(){
         TalonFXConfiguration config = new TalonFXConfiguration();
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        config.Slot0.kP = 0;//0.3;
+        config.Slot0.kV = 0;//0.14;
+        config.Slot0.kS = 0;
         config.CurrentLimits.StatorCurrentLimit = Constants.Swerve.STATOR_CURRENT_LIMIT;
         config.CurrentLimits.SupplyCurrentLimit = Constants.Swerve.SUPPLY_CURRENT_LIMIT;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
@@ -262,8 +267,11 @@ public class TalonFXModule{
           desiredState = new SwerveModuleState(
               -desiredState.speedMetersPerSecond, desiredState.angle.rotateBy(Rotation2d.kPi));
         }
-        
-        driveMotor.set(Math.cos(Math.abs(desiredState.angle.getRadians() -  latestAngle.getRadians())) * desiredState.speedMetersPerSecond/Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS);
+        double velocity = Math.cos(Math.abs(desiredState.angle.getRadians() -  latestAngle.getRadians())) * desiredState.speedMetersPerSecond;
+        //driveMotor.set(velocity/Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS);
+        driveMotor.setControl(
+            velocitySetter.withVelocity(velocity * Constants.Swerve.DRIVING_GEAR_RATIO/Constants.Swerve.WHEEL_CIRCUMFERENCE_METERS)
+        );
         turnMotor.setControl(
             rotationSetter.withPosition(desiredState.angle.getRotations())
         );
