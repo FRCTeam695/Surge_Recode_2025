@@ -37,7 +37,7 @@ public class RobotContainer {
   private final Intake Intake;
   private final LEDs LEDs;
   
-  private final String[] camNames = {"limelight-speaker"};
+  private final String[] camNames = {""};
     
   // Creates an array of all the swerve modules, pass this into Swerve
   private final TalonFXModule[] modules = new TalonFXModule[] 
