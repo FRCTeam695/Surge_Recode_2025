@@ -122,8 +122,8 @@ public class TalonFXModule{
         config.Slot0.kS = 0;
         config.CurrentLimits.StatorCurrentLimit = Constants.Swerve.STATOR_CURRENT_LIMIT;
         config.CurrentLimits.SupplyCurrentLimit = Constants.Swerve.SUPPLY_CURRENT_LIMIT;
-        config.CurrentLimits.SupplyCurrentLimitEnable = true;
-        config.CurrentLimits.StatorCurrentLimitEnable = true;
+        config.CurrentLimits.SupplyCurrentLimitEnable = false;//true;
+        config.CurrentLimits.StatorCurrentLimitEnable = true;//true;
         config.Audio.AllowMusicDurDisable = true;
 
         if(Constants.Swerve.MODULE_IS_INVERTED){
@@ -190,8 +190,6 @@ public class TalonFXModule{
     
     public void driveWithVoltage(double volts){
         driveMotor.setVoltage(volts);
-        SmartDashboard.putNumber("Swerve/Module " + (this.index + 1) + "/Supply Voltage Draw", driveMotor.getSupplyVoltage().getValueAsDouble());
-        SmartDashboard.putNumber("Swerve/Module " + (this.index + 1) + "/Voltage Draw", driveMotor.getMotorVoltage().getValueAsDouble());
     }
 
     public void setTurnMotor(double v){

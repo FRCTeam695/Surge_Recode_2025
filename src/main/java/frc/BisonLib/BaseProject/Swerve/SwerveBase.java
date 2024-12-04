@@ -31,6 +31,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -72,9 +73,13 @@ public class SwerveBase extends SubsystemBase {
     protected double[] initialPositions = new double[4];
 
     protected double lastTime = Timer.getFPGATimestamp();
+    private LinearFilter lowpass = LinearFilter.movingAverage(50);
     protected double currentTime = 0;
     protected double totalLoopTime = 0;
     protected double inc = 0;
+    protected double avgLoopTIme = 0;
+    protected double failedOdometryUpdates = 0;
+    protected double successfulOdometryUpdates = 0;
 
     public final Trigger atRotationSetpoint = new Trigger(()-> robotRotationAtSetpoint());
     public PPHolonomicDriveController pathplannerController =  new PPHolonomicDriveController( // HolonomicPathFollowerConfig, this should likely live in your Constants class
@@ -600,7 +605,7 @@ public class SwerveBase extends SubsystemBase {
     public void driveRobotRelative(ChassisSpeeds chassisSpeeds, boolean useSetpointGenerator) {
         if(!useSetpointGenerator){
             // discretizes the chassis speeds (acccounts for robot skew)
-            chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, Constants.Swerve.ROBOT_LOOP_TIME);
+            chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, Constants.Swerve.DISCRETIZATION_TIMESTAMP);
 
             //SmartDashboard.putString("Swerve/Commanded Chassis Speeds", chassisSpeeds.toString());
             // convert chassis speeds to module states
@@ -613,7 +618,7 @@ public class SwerveBase extends SubsystemBase {
             previousSetpoint = setpointGenerator.generateSetpoint(
                 previousSetpoint, // The previous setpoint
                 chassisSpeeds, // The desired target speeds
-                Constants.Swerve.ROBOT_LOOP_TIME // The loop time of the robot code, in seconds
+                Constants.Swerve.DISCRETIZATION_TIMESTAMP // The loop time of the robot code, in seconds
             );
 
             //set the modules to their desired speeds
@@ -631,7 +636,7 @@ public class SwerveBase extends SubsystemBase {
     public void driveSwerveFromChassisSpeedsCustomCenterOfRotation(ChassisSpeeds chassisSpeeds){
 
         // discretizes the chassis speeds (acccounts for robot skew)
-        chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, Constants.Swerve.ROBOT_LOOP_TIME);
+        chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, Constants.Swerve.DISCRETIZATION_TIMESTAMP);
         //SmartDasboard.putNumber("Swerve/chassis x", chassisSpeeds.vxMetersPerSecond);
         //SmartDasboard.putNumber("Swerve/chassis y", chassisSpeeds.vyMetersPerSecond);
         //SmartDasboard.putNumber("Swerve/chassis omega", chassisSpeeds.omegaRadiansPerSecond);
@@ -671,7 +676,7 @@ public class SwerveBase extends SubsystemBase {
         if(DriverStation.isAutonomous()){
             return;
         }
-
+        
         driveRobotRelative(ChassisSpeeds.fromFieldRelativeSpeeds(speedsSupplier.get(), getSavedPose().getRotation()), false);
     }
     
@@ -732,14 +737,18 @@ public class SwerveBase extends SubsystemBase {
 
 
     public void updateOdometryWithKinematics(){
-        // lastTime = currentTime;
-        // currentTime = Timer.getFPGATimestamp();
-        // inc++;
-        // totalLoopTime += (currentTime-lastTime);
-        //SmartDashboard.putNumber("avg loop time", totalLoopTime/inc);
+        lastTime = currentTime;
+        currentTime = Timer.getFPGATimestamp();
+        totalLoopTime += (currentTime-lastTime);
+        avgLoopTIme = lowpass.calculate(currentTime - lastTime);
 
         StatusCode signal = BaseStatusSignal.waitForAll(2 / Constants.Swerve.ODOMETRY_UPDATE_RATE_HZ_INTEGER, allOdomSignals);
-        if(signal.isError()) System.out.println(signal);
+        if(signal.isError()){
+            ++failedOdometryUpdates;
+        }
+        else{
+            ++successfulOdometryUpdates;
+        }
 
         SwerveModulePosition[] positions = getModulePositions();
         SwerveModuleState[] states = getModuleStates();
@@ -764,14 +773,14 @@ public class SwerveBase extends SubsystemBase {
      * 
      * @param voltageSupplier
      */
-    public void testModules(DoubleSupplier voltageSupplier){
+    public void testModules(double voltage){
         //SmartDasboard.putNumber("Swerve/Module 1/Module 1 Current", modules[0].getDriveStatorCurrent());
         //SmartDashboard.putNumber("Swerve/Module 2/Module 2 Current", modules[1].getDriveStatorCurrent());
         //SmartDashboard.putNumber("Swerve/Module 3/Module 3 Current", modules[2].getDriveStatorCurrent());
         //SmartDashboard.putNumber("Swerve/Module 4/Module 4 Current", modules[3].getDriveStatorCurrent());
 
         for(var mod : modules){
-            mod.driveWithVoltage(voltageSupplier.getAsDouble());
+            mod.driveWithVoltage(voltage);
         }
     }
 
@@ -789,6 +798,9 @@ public class SwerveBase extends SubsystemBase {
 
     @Override
     public void periodic() {
+        SmartDashboard.putNumber("average odometry loop time", avgLoopTIme);
+        SmartDashboard.putNumber("failed odometry updates", failedOdometryUpdates);
+        SmartDashboard.putNumber("sucessful odometry updates", successfulOdometryUpdates);
         //modules[0].setTurnMotor(1);
         //SmartDashboard.putNumber("turn motor speed", modules[0].getTurnVelocity());
 
@@ -804,7 +816,7 @@ public class SwerveBase extends SubsystemBase {
         //updateOdometryWithVision();
 
 
-       //SmartDashboard.putNumber("Actual Gyro Update Rate", gyro.getActualUpdateRate());
+       SmartDashboard.putNumber("Actual Gyro Update Rate", gyro.getActualUpdateRate());
         m_field.setRobotPose(getSavedPose());
          
 
