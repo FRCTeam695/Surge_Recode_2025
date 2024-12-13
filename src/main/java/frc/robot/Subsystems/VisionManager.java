@@ -108,7 +108,7 @@ public class VisionManager extends SubsystemBase{
         //isWithinShootingRange = new Trigger(()-> withinShootingRange);
         canIntakeNote = new Trigger(()-> canSeeNote);
         tagInSight = new Trigger(()-> canSeeTag);
-        LimelightHelpers.setPriorityTagID(camNames[0], getSpeakerID());
+        // LimelightHelpers.setPriorityTagID(camNames[0], getSpeakerID());
     }
 
     public boolean isRedAlliance(){

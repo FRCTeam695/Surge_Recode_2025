@@ -702,42 +702,44 @@ public class SwerveBase extends SubsystemBase {
      * updateOdometryWithVision uses vision to add measurements to the odometry
      */
     public void updateOdometryWithVision(){
-        LimelightHelpers.SetRobotOrientation("limelight", getSavedPose().getRotation().getDegrees(), 0, 0, 0, 0, 0);
-        LimelightHelpers.PoseEstimate mt2_estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
-        //m_field.getObject("limelight").setPose(mt2_estimate.pose);
+        LimelightHelpers.SetRobotOrientation("limelight-shooter", getSavedPose().getRotation().getDegrees(), 0, 0, 0, 0, 0);
+        // LimelightHelpers.PoseEstimate mt2_estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-shooter");
+        // SmartDashboard.putString("Megatag 2 pose estimate", mt2_estimate.toString());
+        // m_field.getObject("limelight-shooter").setPose(mt2_estimate.pose);
 
 
-        // for(String cam : camNames){
-        //     LimelightHelpers.SetRobotOrientation(cam, getSavedPose().getRotation().getDegrees(), 0, 0, 0, 0, 0);
-        //     LimelightHelpers.PoseEstimate mt2_estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
-        //     double[] stddevs = NetworkTableInstance.getDefault().getTable("limelight").getEntry("stddevs").getDoubleArray(new double[6]);
+        for(String cam : camNames){  
+            LimelightHelpers.SetRobotOrientation(cam, getSavedPose().getRotation().getDegrees(), 0, 0, 0, 0, 0);
+            LimelightHelpers.PoseEstimate mt2_estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
+            double[] stddevs = NetworkTableInstance.getDefault().getTable(cam).getEntry("stddevs").getDoubleArray(new double[6]);
 
 
 
 
-        //     // Only update pose if it is valid and if we arent spinning too fast
-        //     if(mt2_estimate.tagCount != 0 && getGyroRate() < 720){
+            // Only update pose if it is valid and if we arent spinning too fast
+            if(mt2_estimate.tagCount != 0 && getGyroRate() < 720){
 
-        //         // Finally, we actually add the measurement to our odometry
-        //         odometryLock.writeLock().lock();
-        //         try{
-        //             odometry.addVisionMeasurement
-        //             (
-        //                 mt2_estimate.pose, 
-        //                 mt2_estimate.timestampSeconds,
+                // Finally, we actually add the measurement to our odometry
+                odometryLock.writeLock().lock();
+                try{
+                    odometry.addVisionMeasurement
+                    (
+                        mt2_estimate.pose, 
+                        mt2_estimate.timestampSeconds,
                         
-        //                 // This way it doesn't trust the rotation reading from the vision
-        //                 VecBuilder.fill(1, 1, 9999999)
-        //             );
-        //         }finally{
-        //             odometryLock.writeLock().unlock();
-        //         }
+                        // This way it doesn't trust the rotation reading from the vision
+                        VecBuilder.fill(1, 1, 999999999)
+                    );
+                }finally{
+                    odometryLock.writeLock().unlock();
+                }
                 
-        //         // This puts the pose reading from each camera onto the Field2d Widget,
-        //         // Docs - https://docs.wpilib.org/en/stable/docs/software/dashboards/glass/field2d-widget.html
-        //         m_field.getObject(cam).setPose(mt2_estimate.pose);
-        //     }
-        // }  
+                // This puts the pose reading from each camera onto the Field2d Widget,
+                // Docs - https://docs.wpilib.org/en/stable/docs/software/dashboards/glass/field2d-widget.html
+                m_field.getObject(cam).setPose(mt2_estimate.pose);
+                SmartDashboard.putString("mt2 pose", mt2_estimate.pose.toString());
+            }
+        }  
     }
 
 
