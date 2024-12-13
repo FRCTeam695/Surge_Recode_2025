@@ -5,7 +5,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 //import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -45,6 +44,7 @@ public class TalonFXModule{
 
     private final PositionVoltage rotationSetter = new PositionVoltage(0.0);
     private final VelocityVoltage velocitySetter = new VelocityVoltage(0.0);
+    
     private SwerveModulePosition latestPosition = new SwerveModulePosition();
 
     /*
