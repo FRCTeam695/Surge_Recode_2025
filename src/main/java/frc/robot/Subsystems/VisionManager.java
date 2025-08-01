@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.BisonLib.BaseProject.LimelightHelpers;
+import frc.robot.LimelightHelpers;
 import frc.robot.Constants;
 
 public class VisionManager extends SubsystemBase{
@@ -45,7 +45,6 @@ public class VisionManager extends SubsystemBase{
          */
         //armTable.put(distance to april tag, arm pitch);
         armTable = new InterpolatingDoubleTreeMap();
-        armTable.put(25.76, Constants.Arm.SHOOT_POSITION_RADIANS);
         armTable.put(22.12, Math.toRadians(52));
         armTable.put(14.57, Math.toRadians(48));
         armTable.put(11.11, Math.toRadians(45));
@@ -63,7 +62,7 @@ public class VisionManager extends SubsystemBase{
 
         // armTable.put(0.32, Math.toRadians(32));
         // armTable.put(-0.76, Math.toRadians(36.2));
-        // armTable.put(-1.25, Math.toRadians(36));
+        // armTable.put(-1.25, Math.toRadians(36));it
         // armTable.put(-2.66, Math.toRadians(34.8));
 
 
