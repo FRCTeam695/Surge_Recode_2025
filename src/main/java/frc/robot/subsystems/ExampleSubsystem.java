@@ -7,20 +7,36 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.config.ClosedLoopConfig;
-import com.revrobotics.spark.config.SparkFlexConfig;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.RelativeEncoder;
-import com.revrobotics.spark.SparkBase;
-import com.revrobotics.spark.SparkClosedLoopController;
 
 public class ExampleSubsystem extends SubsystemBase {
   /** Creates a new ExampleSubsystem. */
-private SparkFlex shooter;
-  
+
+  private SparkFlex shooter1;
+  private SparkFlex shooter2;
 
   public ExampleSubsystem() {
+    shooter1 = new SparkFlex(50, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
+    shooter2 = new SparkFlex(53, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
   }
+
+  public Command shoot() {
+    return runOnce(
+      () -> {
+        shooter1.set(1);
+        shooter2.set(1);
+      }
+    );
+  }
+
+  public Command stopShoot() {
+    return runOnce(
+      () -> {
+        shooter1.set(0);
+        shooter2.set(0);
+      }
+    );
+  }
+
 
   /**
    * Example command factory method.

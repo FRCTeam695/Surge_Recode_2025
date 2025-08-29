@@ -30,6 +30,8 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the trigger bindings
     configureBindings();
+    m_driverController.leftBumper().whileTrue(m_exampleSubsystem.shoot())
+                                   .whileFalse(m_exampleSubsystem.stopShoot());
   }
 
   /**
