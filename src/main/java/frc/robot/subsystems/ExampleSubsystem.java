@@ -6,6 +6,8 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.PIDConstants;
+import edu.wpi.first.math.controller.PIDController;
 import com.revrobotics.spark.SparkFlex;
 
 public class ExampleSubsystem extends SubsystemBase {
@@ -13,17 +15,18 @@ public class ExampleSubsystem extends SubsystemBase {
 
   private SparkFlex shooter1;
   private SparkFlex shooter2;
+  PIDController pid = new PIDController(PIDConstants.kP, PIDConstants.kI, PIDConstants.kD);
 
   public ExampleSubsystem() {
     shooter1 = new SparkFlex(50, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
     shooter2 = new SparkFlex(53, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
   }
 
-  public Command shoot() {
+  public Command shoot(double speed) {
     return runOnce(
       () -> {
-        shooter1.set(1);
-        shooter2.set(1);
+        shooter1.set(pid.calculate(speed));
+        shooter2.set(pid.calculate(speed));
       }
     );
   }
