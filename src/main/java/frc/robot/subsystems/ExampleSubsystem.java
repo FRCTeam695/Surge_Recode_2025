@@ -10,12 +10,18 @@ import frc.robot.Constants.PIDConstants;
 import edu.wpi.first.math.controller.PIDController;
 import com.revrobotics.spark.SparkFlex;
 
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+
+
 public class ExampleSubsystem extends SubsystemBase {
   /** Creates a new ExampleSubsystem. */
 
   private SparkFlex shooter1;
   private SparkFlex shooter2;
   PIDController pid = new PIDController(PIDConstants.kP, PIDConstants.kI, PIDConstants.kD);
+  NetworkTable table1 = NetworkTableInstance.getDefault().getTable("speedOfMotor1");
+  NetworkTable table2 = NetworkTableInstance.getDefault().getTable("speedOfMotor2");
 
   public ExampleSubsystem() {
     shooter1 = new SparkFlex(50, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
@@ -23,10 +29,14 @@ public class ExampleSubsystem extends SubsystemBase {
   }
 
   public Command shoot(double speed) {
-    return runOnce(
+    return run(
       () -> {
-        shooter1.set(pid.calculate(speed));
-        shooter2.set(pid.calculate(speed));
+        double measurement = shooter1.getEncoder().getVelocity();
+        double output = pid.calculate(measurement, speed);
+        shooter1.set(-1 * output);
+        shooter2.set(output);
+
+        table1.getEntry("speedOfMotor1").setDouble(measurement);
       }
     );
   }

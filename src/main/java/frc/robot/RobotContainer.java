@@ -30,8 +30,6 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the trigger bindings
     configureBindings();
-    m_driverController.leftBumper().onTrue(m_exampleSubsystem.shoot(0)) //change to desired speed
-                                   .onFalse(m_exampleSubsystem.stopShoot());
   }
 
   /**
@@ -47,6 +45,9 @@ public class RobotContainer {
     // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
     new Trigger(m_exampleSubsystem::exampleCondition)
         .onTrue(new ExampleCommand(m_exampleSubsystem));
+
+    m_driverController.leftBumper().onTrue(m_exampleSubsystem.shoot(1)) //change to desired speed
+                                   .onFalse(m_exampleSubsystem.stopShoot());
 
     // Schedule `exampleMethodCommand` when the Xbox controller's B button is pressed,
     // cancelling on release.
