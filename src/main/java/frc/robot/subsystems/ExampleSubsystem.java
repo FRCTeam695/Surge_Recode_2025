@@ -8,7 +8,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.PIDConstants;
 import edu.wpi.first.math.controller.PIDController;
+
+import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -26,6 +30,21 @@ public class ExampleSubsystem extends SubsystemBase {
   public ExampleSubsystem() {
     shooter1 = new SparkFlex(50, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
     shooter2 = new SparkFlex(53, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
+
+    //set limits!
+    SparkMaxConfig config = new SparkMaxConfig();
+    
+    // this line accounts for if the battery voltage is fluctuating
+    config.voltageCompensation(11.5);
+    //sets break mode
+    config.idleMode(IdleMode.kBrake);
+    //current limit to 40A
+    config.smartCurrentLimit(40);
+
+    //check what safeparams and persistperams means
+    shooter1.configure(config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
+    shooter2.configure(config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
+
   }
 
   public Command shoot(double speed) {
