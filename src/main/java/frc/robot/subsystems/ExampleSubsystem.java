@@ -10,6 +10,7 @@ import frc.robot.Constants.PIDConstants;
 import edu.wpi.first.math.controller.PIDController;
 
 import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -17,23 +18,46 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkClosedLoopController;
+
 
 public class ExampleSubsystem extends SubsystemBase {
   /** Creates a new ExampleSubsystem. */
 
+  //motors
   private SparkFlex shooter1;
   private SparkFlex shooter2;
-  PIDController pid = new PIDController(PIDConstants.kP, PIDConstants.kI, PIDConstants.kD);
+
+  //pid controllers
+  private SparkClosedLoopController pid1;
+  private SparkClosedLoopController pid2;
+
+  //network tables
   NetworkTable table1 = NetworkTableInstance.getDefault().getTable("speedOfMotor1");
   NetworkTable table2 = NetworkTableInstance.getDefault().getTable("speedOfMotor2");
 
   public ExampleSubsystem() {
+    
+    //set motors
     shooter1 = new SparkFlex(50, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
     shooter2 = new SparkFlex(53, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
+
+    //set pid controllers
+    pid1 = shooter1.getClosedLoopController();
+    pid2 = shooter2.getClosedLoopController();
 
     //set limits!
     SparkMaxConfig config = new SparkMaxConfig();
     
+    //will this be successfully configured? is another config needed to be made
+    config.closedLoop
+    .p(PIDConstants.kP)
+    .i(PIDConstants.kI)
+    .d(PIDConstants.kD)
+    .outputRange(PIDConstants.kMinOutput, PIDConstants.kMaxOutput);
+
     // this line accounts for if the battery voltage is fluctuating
     config.voltageCompensation(11.5);
     //sets break mode
@@ -44,18 +68,13 @@ public class ExampleSubsystem extends SubsystemBase {
     //check what safeparams and persistperams means
     shooter1.configure(config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
     shooter2.configure(config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
-
   }
 
   public Command shoot(double speed) {
     return run(
       () -> {
-        double measurement = shooter1.getEncoder().getVelocity();
-        double output = pid.calculate(measurement, speed);
-        shooter1.set(-1 * output);
-        shooter2.set(output);
-
-        table1.getEntry("speedOfMotor1").setDouble(measurement);
+        pid1.setReference(speed, ControlType.kVelocity);
+        pid2.setReference(-speed, ControlType.kVelocity);
       }
     );
   }
