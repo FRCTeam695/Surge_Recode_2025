@@ -46,7 +46,7 @@ public class RobotContainer {
     new Trigger(m_exampleSubsystem::exampleCondition)
         .onTrue(new ExampleCommand(m_exampleSubsystem));
 
-    m_driverController.leftBumper().onTrue(m_exampleSubsystem.shoot(1)) //change to desired speed
+    m_driverController.leftBumper().onTrue(m_exampleSubsystem.shoot(3000)) //change to desired speed
                                    .onFalse(m_exampleSubsystem.stopShoot());
 
     // Schedule `exampleMethodCommand` when the Xbox controller's B button is pressed,

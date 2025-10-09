@@ -12,16 +12,16 @@ import edu.wpi.first.math.controller.PIDController;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkFlexConfig;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
-import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkClosedLoopController;
-
 
 public class ExampleSubsystem extends SubsystemBase {
   /** Creates a new ExampleSubsystem. */
@@ -48,35 +48,39 @@ public class ExampleSubsystem extends SubsystemBase {
     pid1 = shooter1.getClosedLoopController();
     pid2 = shooter2.getClosedLoopController();
 
-    //set limits!
-    SparkMaxConfig config = new SparkMaxConfig();
-    
-    //will this be successfully configured? is another config needed to be made
-    config.closedLoop
-    .p(PIDConstants.kP)
-    .i(PIDConstants.kI)
-    .d(PIDConstants.kD)
-    .outputRange(PIDConstants.kMinOutput, PIDConstants.kMaxOutput);
+    SparkFlexConfig config1 = new SparkFlexConfig();
+    config1.closedLoop
+      .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+      .p(PIDConstants.kP)
+      .i(PIDConstants.kI)
+      .d(PIDConstants.kD)
+      .outputRange(PIDConstants.kMinOutput, PIDConstants.kMaxOutput);
+    config1.voltageCompensation(11.5);
+    config1.idleMode(IdleMode.kBrake);
+    config1.smartCurrentLimit(40);
 
-    // this line accounts for if the battery voltage is fluctuating
-    config.voltageCompensation(11.5);
-    //sets break mode
-    config.idleMode(IdleMode.kBrake);
-    //current limit to 40A
-    config.smartCurrentLimit(40);
+    SparkFlexConfig config2 = new SparkFlexConfig();
+    config2.closedLoop
+      .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+      .p(PIDConstants.kP)
+      .i(PIDConstants.kI)
+      .d(PIDConstants.kD)
+      .outputRange(PIDConstants.kMinOutput, PIDConstants.kMaxOutput);
+    config2.voltageCompensation(11.5);
+    config2.idleMode(IdleMode.kBrake);
+    config2.smartCurrentLimit(40);
 
-    //check what safeparams and persistperams means
-    shooter1.configure(config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
-    shooter2.configure(config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
+    shooter1.configure(config1, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters);
+    shooter2.configure(config2, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters);
   }
 
-  public Command shoot(double speed) {
+  public Command shoot(double speedRPM) {
     return run(
       () -> {
-        pid1.setReference(speed, ControlType.kVelocity);
-        pid2.setReference(-speed, ControlType.kVelocity);
+        pid1.setReference(speedRPM, ControlType.kVelocity);
+        pid2.setReference(-speedRPM, ControlType.kVelocity);
       }
-    );
+    );  
   }
 
   public Command stopShoot() {
@@ -86,6 +90,10 @@ public class ExampleSubsystem extends SubsystemBase {
         shooter2.set(0);
       }
     );
+  }
+
+  public double getVelocity() {
+    return shooter1.getEncoder().getVelocity();
   }
 
 
