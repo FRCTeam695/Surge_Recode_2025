@@ -4,10 +4,12 @@
 
 package frc.robot.subsystems;
 
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.PIDConstants;
-import edu.wpi.first.math.controller.PIDController;
 
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
@@ -16,27 +18,29 @@ import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.NetworkTableEntry;
 
-import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.RelativeEncoder;
 
 public class ExampleSubsystem extends SubsystemBase {
-  /** Creates a new ExampleSubsystem. */
 
   //motors
   private SparkFlex shooter1;
   private SparkFlex shooter2;
 
+  //encoder
+  private RelativeEncoder encoder;
+
   //pid controllers
   private SparkClosedLoopController pid1;
   private SparkClosedLoopController pid2;
 
-  //network tables
-  NetworkTable table1 = NetworkTableInstance.getDefault().getTable("speedOfMotor1");
-  NetworkTable table2 = NetworkTableInstance.getDefault().getTable("speedOfMotor2");
+  private NetworkTableInstance inst;
+  private NetworkTable table;
+  private NetworkTableEntry velocityEntry;
+
+  private double currentRPM;
 
   public ExampleSubsystem() {
     
@@ -44,10 +48,14 @@ public class ExampleSubsystem extends SubsystemBase {
     shooter1 = new SparkFlex(50, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
     shooter2 = new SparkFlex(53, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
 
+    //set encoder
+    encoder = shooter1.getEncoder();
+
     //set pid controllers
     pid1 = shooter1.getClosedLoopController();
     pid2 = shooter2.getClosedLoopController();
 
+    //configuring pid controller for shooter1
     SparkFlexConfig config1 = new SparkFlexConfig();
     config1.closedLoop
       .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
@@ -59,6 +67,7 @@ public class ExampleSubsystem extends SubsystemBase {
     config1.idleMode(IdleMode.kBrake);
     config1.smartCurrentLimit(40);
 
+    //configuring pid controller for shooter2
     SparkFlexConfig config2 = new SparkFlexConfig();
     config2.closedLoop
       .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
@@ -70,19 +79,28 @@ public class ExampleSubsystem extends SubsystemBase {
     config2.idleMode(IdleMode.kBrake);
     config2.smartCurrentLimit(40);
 
+    //applies configurements onto motors
     shooter1.configure(config1, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters);
     shooter2.configure(config2, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters);
+  
+    inst = NetworkTableInstance.getDefault();
+    table = inst.getTable("velocity");
+    velocityEntry = table.getEntry("currentRPM");
   }
 
+  //shoot to desired speed
   public Command shoot(double speedRPM) {
     return run(
       () -> {
         pid1.setReference(speedRPM, ControlType.kVelocity);
         pid2.setReference(-speedRPM, ControlType.kVelocity);
+        currentRPM = encoder.getVelocity();
+        velocityEntry.setDouble(currentRPM);
       }
     );  
   }
 
+  //sets speed to zero, stops shooting
   public Command stopShoot() {
     return runOnce(
       () -> {
@@ -92,12 +110,11 @@ public class ExampleSubsystem extends SubsystemBase {
     );
   }
 
-  public double getVelocity() {
+  /*public double getVelocity() {
     return shooter1.getEncoder().getVelocity();
-  }
+  }*/
 
-
-  /**
+   /**
    * Example command factory method.
    *
    * @return a command
@@ -120,10 +137,11 @@ public class ExampleSubsystem extends SubsystemBase {
     // Query some boolean state, such as a digital sensor.
     return false;
   }
-
+  
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+    SmartDashboard.putNumber("velocity", encoder.getVelocity());
   }
 
   @Override
