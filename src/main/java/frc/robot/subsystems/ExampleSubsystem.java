@@ -14,6 +14,7 @@ import frc.robot.Constants.PIDConstants;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkFlex;
+
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
@@ -30,7 +31,7 @@ public class ExampleSubsystem extends SubsystemBase {
   private SparkFlex shooter2;
 
   //encoder
-  private RelativeEncoder encoder;
+  //private RelativeEncoder encoder;
 
   //pid controllers
   private SparkClosedLoopController pid1;
@@ -49,7 +50,7 @@ public class ExampleSubsystem extends SubsystemBase {
     shooter2 = new SparkFlex(53, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
 
     //set encoder
-    encoder = shooter1.getEncoder();
+    //encoder = shooter1.getEncoder();
 
     //set pid controllers
     pid1 = shooter1.getClosedLoopController();
@@ -94,8 +95,10 @@ public class ExampleSubsystem extends SubsystemBase {
       () -> {
         pid1.setReference(speedRPM, ControlType.kVelocity);
         pid2.setReference(-speedRPM, ControlType.kVelocity);
-        currentRPM = encoder.getVelocity();
+        currentRPM = shooter1.get();
         velocityEntry.setDouble(currentRPM);
+        //currentRPM = encoder.getVelocity();
+        //velocityEntry.setDouble(currentRPM);
       }
     );  
   }
@@ -141,7 +144,8 @@ public class ExampleSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    SmartDashboard.putNumber("velocity", encoder.getVelocity());
+    //SmartDashboard.putNumber("velocity", encoder.getVelocity());
+
   }
 
   @Override
