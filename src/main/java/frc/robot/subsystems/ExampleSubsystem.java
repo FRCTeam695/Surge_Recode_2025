@@ -1,3 +1,4 @@
+
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
@@ -22,16 +23,12 @@ import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.networktables.NetworkTableEntry;
 
 import com.revrobotics.spark.SparkClosedLoopController;
-import com.revrobotics.RelativeEncoder;
 
 public class ExampleSubsystem extends SubsystemBase {
 
   //motors
   private SparkFlex shooter1;
   private SparkFlex shooter2;
-
-  //encoder
-  //private RelativeEncoder encoder;
 
   //pid controllers
   private SparkClosedLoopController pid1;
@@ -48,9 +45,6 @@ public class ExampleSubsystem extends SubsystemBase {
     //set motors
     shooter1 = new SparkFlex(50, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
     shooter2 = new SparkFlex(53, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
-
-    //set encoder
-    //encoder = shooter1.getEncoder();
 
     //set pid controllers
     pid1 = shooter1.getClosedLoopController();
@@ -71,7 +65,7 @@ public class ExampleSubsystem extends SubsystemBase {
     //configuring pid controller for shooter2
     SparkFlexConfig config2 = new SparkFlexConfig();
     config2.closedLoop
-      .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+      .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
       .p(PIDConstants.kP)
       .i(PIDConstants.kI)
       .d(PIDConstants.kD)
@@ -95,10 +89,8 @@ public class ExampleSubsystem extends SubsystemBase {
       () -> {
         pid1.setReference(speedRPM, ControlType.kVelocity);
         pid2.setReference(-speedRPM, ControlType.kVelocity);
-        currentRPM = shooter1.get();
+        currentRPM = shooter1.getAbsoluteEncoder().getVelocity();
         velocityEntry.setDouble(currentRPM);
-        //currentRPM = encoder.getVelocity();
-        //velocityEntry.setDouble(currentRPM);
       }
     );  
   }
@@ -144,7 +136,7 @@ public class ExampleSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    //SmartDashboard.putNumber("velocity", encoder.getVelocity());
+    SmartDashboard.putNumber("velocity", shooter1.getAbsoluteEncoder().getVelocity());
 
   }
 
