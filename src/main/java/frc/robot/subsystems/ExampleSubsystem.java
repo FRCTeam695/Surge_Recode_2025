@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.PIDConstants;
 
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkFlex;
@@ -40,11 +41,16 @@ public class ExampleSubsystem extends SubsystemBase {
 
   private double currentRPM;
 
+  private RelativeEncoder encoder1;
+
   public ExampleSubsystem() {
     
     //set motors
     shooter1 = new SparkFlex(50, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
     shooter2 = new SparkFlex(53, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
+
+    RelativeEncoder encoder1 = shooter1.getEncoder();
+    encoder1.setPosition(0);
 
     //set pid controllers
     pid1 = shooter1.getClosedLoopController();
@@ -62,6 +68,8 @@ public class ExampleSubsystem extends SubsystemBase {
     config1.idleMode(IdleMode.kBrake);
     config1.smartCurrentLimit(40);
 
+    config1.encoder.positionConversionFactor(1).velocityConversionFactor(1);
+    
     //configuring pid controller for shooter2
     SparkFlexConfig config2 = new SparkFlexConfig();
     config2.closedLoop
@@ -89,8 +97,8 @@ public class ExampleSubsystem extends SubsystemBase {
       () -> {
         pid1.setReference(speedRPM, ControlType.kVelocity);
         pid2.setReference(-speedRPM, ControlType.kVelocity);
-        currentRPM = shooter1.getAbsoluteEncoder().getVelocity();
-        velocityEntry.setDouble(currentRPM);
+        //currentRPM = shooter1.getAbsoluteEncoder().getVelocity();
+        //velocityEntry.setDouble(currentRPM);
       }
     );  
   }
@@ -136,7 +144,7 @@ public class ExampleSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    SmartDashboard.putNumber("velocity", shooter1.getAbsoluteEncoder().getVelocity());
+    SmartDashboard.putNumber("velocity", encoder1.getVelocity());
 
   }
 
