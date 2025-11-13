@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.PIDConstants;
 
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkFlex;
@@ -35,22 +36,24 @@ public class ExampleSubsystem extends SubsystemBase {
   private SparkClosedLoopController pid1;
   private SparkClosedLoopController pid2;
 
+  private RelativeEncoder encoder1;
+  private RelativeEncoder encoder2;
+
   private NetworkTableInstance inst;
   private NetworkTable table;
   private NetworkTableEntry velocityEntry;
 
   private double currentRPM;
 
-  private RelativeEncoder encoder1;
 
   public ExampleSubsystem() {
     
+  shooter1 = new SparkFlex(50, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
+  shooter2 = new SparkFlex(53, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
+    
     //set motors
-    shooter1 = new SparkFlex(50, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
-    shooter2 = new SparkFlex(53, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
-
-    RelativeEncoder encoder1 = shooter1.getEncoder();
-    encoder1.setPosition(0);
+     encoder1 = shooter1.getEncoder();
+     encoder2 = shooter2.getEncoder();
 
     //set pid controllers
     pid1 = shooter1.getClosedLoopController();
@@ -69,7 +72,7 @@ public class ExampleSubsystem extends SubsystemBase {
     config1.smartCurrentLimit(40);
 
     config1.encoder.positionConversionFactor(1).velocityConversionFactor(1);
-    
+
     //configuring pid controller for shooter2
     SparkFlexConfig config2 = new SparkFlexConfig();
     config2.closedLoop
@@ -78,9 +81,18 @@ public class ExampleSubsystem extends SubsystemBase {
       .i(PIDConstants.kI)
       .d(PIDConstants.kD)
       .outputRange(PIDConstants.kMinOutput, PIDConstants.kMaxOutput);
+      //
+       .p(0.0001, ClosedLoopSlot.kSlot1)
+       .i(0, ClosedLoopSlot.kSlot1)
+       .d(0, ClosedLoopSlot.kSlot1)
+       .velocityFF(1.0 / 5767, ClosedLoopSlot.kSlot1)
+       .outputRange(-1, 1, ClosedLoopSlot.kSlot1);
+
     config2.voltageCompensation(11.5);
     config2.idleMode(IdleMode.kBrake);
     config2.smartCurrentLimit(40);
+
+    config2.encoder.positionConversionFactor(1).velocityConversionFactor(1);
 
     //applies configurements onto motors
     shooter1.configure(config1, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters);
@@ -97,8 +109,8 @@ public class ExampleSubsystem extends SubsystemBase {
       () -> {
         pid1.setReference(speedRPM, ControlType.kVelocity);
         pid2.setReference(-speedRPM, ControlType.kVelocity);
-        //currentRPM = shooter1.getAbsoluteEncoder().getVelocity();
-        //velocityEntry.setDouble(currentRPM);
+        currentRPM = shooter1.getAbsoluteEncoder().getVelocity();
+        velocityEntry.setDouble(currentRPM);
       }
     );  
   }
