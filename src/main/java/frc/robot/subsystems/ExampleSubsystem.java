@@ -66,6 +66,7 @@ public class ExampleSubsystem extends SubsystemBase {
       .p(PIDConstants.kP)
       .i(PIDConstants.kI)
       .d(PIDConstants.kD)
+      .velocityFF(PIDConstants.ff)
       .outputRange(PIDConstants.kMinOutput, PIDConstants.kMaxOutput);
     config1.voltageCompensation(11.5);
     config1.idleMode(IdleMode.kBrake);
@@ -80,13 +81,8 @@ public class ExampleSubsystem extends SubsystemBase {
       .p(PIDConstants.kP)
       .i(PIDConstants.kI)
       .d(PIDConstants.kD)
+      .velocityFF(PIDConstants.ff)
       .outputRange(PIDConstants.kMinOutput, PIDConstants.kMaxOutput);
-      //
-       .p(0.0001, ClosedLoopSlot.kSlot1)
-       .i(0, ClosedLoopSlot.kSlot1)
-       .d(0, ClosedLoopSlot.kSlot1)
-       .velocityFF(1.0 / 5767, ClosedLoopSlot.kSlot1)
-       .outputRange(-1, 1, ClosedLoopSlot.kSlot1);
 
     config2.voltageCompensation(11.5);
     config2.idleMode(IdleMode.kBrake);
@@ -109,6 +105,7 @@ public class ExampleSubsystem extends SubsystemBase {
       () -> {
         pid1.setReference(speedRPM, ControlType.kVelocity);
         pid2.setReference(-speedRPM, ControlType.kVelocity);
+        //absolute encoder?
         currentRPM = shooter1.getAbsoluteEncoder().getVelocity();
         velocityEntry.setDouble(currentRPM);
       }
