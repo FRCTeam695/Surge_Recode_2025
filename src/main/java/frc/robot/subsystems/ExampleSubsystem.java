@@ -131,6 +131,9 @@ public class ExampleSubsystem extends SubsystemBase {
 
           currentRPM = shooter1.getAbsoluteEncoder().getVelocity();
           velocityEntry.setDouble(currentRPM);
+
+          wantedRPM = wantedRPM(joystick);
+          wantedRPMEntry.setDouble(wantedRPM);
         },
 
         interrupted -> {
