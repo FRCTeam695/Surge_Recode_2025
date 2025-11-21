@@ -9,15 +9,13 @@ import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.RobotContainer;
 import frc.robot.Constants.PIDConstants1;
 import frc.robot.Constants.PIDConstants2;
 
-import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
@@ -52,7 +50,6 @@ public class ExampleSubsystem extends SubsystemBase {
   private static NetworkTableEntry wantedRPMEntry;
           
   private static double currentRPM;
-  private static double wantedRPM;
               
   public ExampleSubsystem() {
                   
@@ -66,7 +63,7 @@ public class ExampleSubsystem extends SubsystemBase {
     //set pid controllers
     pid1 = shooter1.getClosedLoopController();
     pid2 = shooter2.getClosedLoopController();
-              
+    
     //configuring pid controller for shooter1
     SparkFlexConfig config1 = new SparkFlexConfig();
       config1.closedLoop
@@ -107,24 +104,23 @@ public class ExampleSubsystem extends SubsystemBase {
       table = inst.getTable("velocity");
       velocityEntry = table.getEntry("currentRPM");
 
-      table = inst.getTable("wantedValue");
+      table = inst.getTable("wantedRPM");
       wantedRPMEntry = table.getEntry("wantedRPM");
     } 
 
-    public Command shoot(Joystick joystick, int axis, double maxRPM) {
-      return new FunctionalCommand(
-        () -> {},
-
+    public Command shoot(DoubleSupplier leftStickY, int axis, double maxRPM) {
+      return run(
         () -> {
-          double input = joystick.getRawAxis(axis);
+          double input = -(leftStickY.getAsDouble());
 
           //deadband
           if(Math.abs(input) < 0.01) {
             input = 0;
           }
+          SmartDashboard.putNumber("input", input);
 
           //inverted to go in the correct direction (CHECK THIS)
-          double speedRPM = -input * maxRPM;
+          double speedRPM = input * maxRPM;
 
           pid1.setReference(speedRPM, ControlType.kVelocity);
           pid2.setReference(-speedRPM, ControlType.kVelocity);
@@ -132,24 +128,10 @@ public class ExampleSubsystem extends SubsystemBase {
           currentRPM = shooter1.getAbsoluteEncoder().getVelocity();
           velocityEntry.setDouble(currentRPM);
 
-          wantedRPM = wantedRPM(joystick);
-          wantedRPMEntry.setDouble(wantedRPM);
-        },
+          wantedRPMEntry.setDouble(speedRPM);
+        }
+      ).finallyDo(()-> {shooter1.set(0);shooter2.set(0);});
 
-        interrupted -> {
-          shooter1.set(0);
-          shooter2.set(0);
-        },
-
-        () -> false,
-
-        this
-      );
-
-    }
-
-    public double wantedRPM(Joystick joystick) {
-      return joystick.getRawAxis(1);
     }
 
   /***shoot to desired speed
@@ -206,9 +188,7 @@ public class ExampleSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    Joystick joystick = RobotContainer.getJoystick();
     SmartDashboard.putNumber("velocity", encoder1.getVelocity());
-    SmartDashboard.putNumber("wantedRPM", wantedRPM(joystick));
 
   }
 

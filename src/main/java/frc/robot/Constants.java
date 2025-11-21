@@ -18,8 +18,8 @@ public final class Constants {
   }
 
   public static class PIDConstants1 {
-    public static final double kP1 = 0.0005;
-    public static final double kI1 = 0.000001;
+    public static final double kP1 = 0.001;
+    public static final double kI1 = 0;
     public static final double kD1 = 0;
     public static final double ff1 = 1/6784;
     public static final double kMaxOutput1 = 1;
@@ -27,7 +27,7 @@ public final class Constants {
   }
 
   public static class PIDConstants2 {
-    public static final double kP2 = 0.0005;
+    public static final double kP2 = 0;
     public static final double kI2 = 0;
     public static final double kD2 = 0;
     public static final double ff2 = 1/6784;
