@@ -49,7 +49,7 @@ public class RobotContainer {
 
 
     m_driverController.a()
-        .whileTrue(m_exampleSubsystem.shoot(()-> m_driverController.getLeftY(), 1, 6784));
+        .whileTrue(m_exampleSubsystem.shoot(()-> m_driverController.getLeftY(), 1, 6400));
 
     m_driverController.y().onTrue(new PrintCommand("hi"));
     
