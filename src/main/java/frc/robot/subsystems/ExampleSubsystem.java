@@ -193,8 +193,6 @@ public class ExampleSubsystem extends SubsystemBase {
   public void periodic() {
     // This method will be called once per scheduler run
     SmartDashboard.putNumber("velocity", encoder1.getVelocity());
-    SmartDashboard.putNumber("velocity abs", shooter1.getAbsoluteEncoder().getVelocity());
-    SmartDashboard.putNumber("kP value", PIDConstants1.kP1);
 
   }
 
